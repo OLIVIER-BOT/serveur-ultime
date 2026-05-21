@@ -4,8 +4,23 @@
 const CONFIG = {
   API_URL: "https://patient-cell-api-serveur.gazoj1209.workers.dev",
   BOT_NAME: "OLIVIER-BOT",
+  SUPABASE_URL: "https://dfgggnhsneqkemexuqty.supabase.co/rest/v1/",
+  SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
 };
 // ============================================
+
+// Sauvegarder dans Supabase
+async function sauvegarder(message, reponse) {
+  await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/historique`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": CONFIG.SUPABASE_KEY,
+      "Authorization": `Bearer ${CONFIG.SUPABASE_KEY}`,
+    },
+    body: JSON.stringify({ message, reponse }),
+  });
+}
 
 async function callAI(prompt) {
   const res = await fetch(`${CONFIG.API_URL}?prompt=${encodeURIComponent(prompt)}`);
@@ -32,6 +47,7 @@ async function sendChat() {
   document.getElementById('typing').innerHTML = `<span>${rep}</span>`;
   document.getElementById('typing').removeAttribute('id');
   box.scrollTop = box.scrollHeight;
+  await sauvegarder(msg, rep);
 }
 
 async function genererTexte() {
@@ -39,7 +55,9 @@ async function genererTexte() {
   const output = document.getElementById('texteOutput');
   if (!input) return;
   output.innerHTML = '<span class="loading">⏳ Génération en cours...</span>';
-  output.textContent = await callAI(input);
+  const rep = await callAI(input);
+  output.textContent = rep;
+  await sauvegarder(input, rep);
 }
 
 async function askAssistant() {
@@ -47,7 +65,9 @@ async function askAssistant() {
   const output = document.getElementById('assistantOutput');
   if (!input) return;
   output.innerHTML = '<span class="loading">⏳ Recherche en cours...</span>';
-  output.textContent = await callAI(input);
+  const rep = await callAI(input);
+  output.textContent = rep;
+  await sauvegarder(input, rep);
 }
 
 document.getElementById('chatInput').addEventListener('keypress', e => {
