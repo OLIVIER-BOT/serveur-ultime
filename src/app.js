@@ -1,75 +1,106 @@
-// ============================================
-// CONFIG — modifie uniquement cette section
-// ============================================
 const CONFIG = {
   API_URL: "https://patient-cell-api-serveur.gazoj1209.workers.dev",
-  BOT_NAME: "OLIVIER-BOT",
-  SUPABASE_URL: "https://dfgggnhsneqkemexuqty.supabase.co/rest/v1/",
-  SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
 };
-// ============================================
 
-// Sauvegarder dans Supabase
-async function sauvegarder(message, reponse) {
-  await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/historique`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": CONFIG.SUPABASE_KEY,
-      "Authorization": `Bearer ${CONFIG.SUPABASE_KEY}`,
-    },
-    body: JSON.stringify({ message, reponse }),
-  });
-}
+let chatHistory = [];
 
-async function callAI(prompt) {
-  const res = await fetch(`${CONFIG.API_URL}?prompt=${encodeURIComponent(prompt)}`);
-  return await res.text();
-}
-
-function showTab(name, btn) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById(name).classList.add('active');
-  btn.classList.add('active');
-}
-
-async function sendChat() {
-  const input = document.getElementById('chatInput');
-  const box = document.getElementById('chatBox');
+async function sendMessage() {
+  const input = document.getElementById('userInput');
   const msg = input.value.trim();
   if (!msg) return;
   input.value = '';
-  box.innerHTML += `<div class="msg user"><span>${msg}</span></div>`;
-  box.innerHTML += `<div class="msg bot" id="typing"><span class="loading">⏳ En train de répondre...</span></div>`;
-  box.scrollTop = box.scrollHeight;
-  const rep = await callAI(msg);
-  document.getElementById('typing').innerHTML = `<span>${rep}</span>`;
-  document.getElementById('typing').removeAttribute('id');
-  box.scrollTop = box.scrollHeight;
-  await sauvegarder(msg, rep);
+  autoResize(input);
+
+  // Cacher le welcome
+  const welcome = document.querySelector('.welcome');
+  if (welcome) welcome.remove();
+
+  addMessage(msg, 'user');
+  addHistory(msg);
+
+  const typingId = addTyping();
+  const reply = await callAI(msg);
+  removeTyping(typingId);
+  addMessage(reply, 'bot');
+  await sauvegarder(msg, reply);
 }
 
-async function genererTexte() {
-  const input = document.getElementById('texteInput').value.trim();
-  const output = document.getElementById('texteOutput');
-  if (!input) return;
-  output.innerHTML = '<span class="loading">⏳ Génération en cours...</span>';
-  const rep = await callAI(input);
-  output.textContent = rep;
-  await sauvegarder(input, rep);
+function addMessage(text, role) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if (role === 'bot') {
+    div.innerHTML = `<div class="bot-name">✳️ PANA</div><div class="bot-content">${formatText(text)}</div>`;
+  } else {
+    div.textContent = text;
+  }
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
 }
 
-async function askAssistant() {
-  const input = document.getElementById('assistantInput').value.trim();
-  const output = document.getElementById('assistantOutput');
-  if (!input) return;
-  output.innerHTML = '<span class="loading">⏳ Recherche en cours...</span>';
-  const rep = await callAI(input);
-  output.textContent = rep;
-  await sauvegarder(input, rep);
+function formatText(text) {
+  return text
+    .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
 }
 
-document.getElementById('chatInput').addEventListener('keypress', e => {
-  if (e.key === 'Enter') sendChat();
-});
+function addTyping() {
+  const area = document.getElementById('chatArea');
+  const id = 'typing_' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = id;
+  div.innerHTML = '<div class="bot-name">✳️ PANA</div><div class="typing">En train de réfléchir...</div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function addHistory(msg) {
+  const history = document.getElementById('history');
+  const div = document.createElement('div');
+  div.className = 'history-item';
+  div.textContent = msg.substring(0, 40);
+  history.prepend(div);
+}
+
+async function callAI(prompt) {
+  try {
+    const res = await fetch(`${CONFIG.API_URL}?prompt=${encodeURIComponent(prompt)}`);
+    return await res.text();
+  } catch (e) {
+    return "Erreur de connexion. Réessaie.";
+  }
+}
+
+async function sauvegarder(message, reponse) {
+  // Sauvegarde Supabase si configuré
+}
+
+function newChat() {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '<div class="welcome"><div class="logo">✳️</div><h1>Bonsoir, <span id="username">Moi</span></h1></div>';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('hidden');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}

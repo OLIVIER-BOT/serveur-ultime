@@ -3,39 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OLIVIER-BOT AI</title>
+  <title>PANA AI</title>
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <header>
-    <h1>🚀 OLIVIER-BOT AI</h1>
-    <p>Chatbot • Générateur • Assistant</p>
-  </header>
-
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('chat', this)">💬 Chat</button>
-    <button class="tab" onclick="showTab('texte', this)">✍️ Texte</button>
-    <button class="tab" onclick="showTab('assistant', this)">🤖 Assistant</button>
-  </div>
-
-  <div id="chat" class="section active">
-    <div class="chat-box" id="chatBox"></div>
-    <div class="input-row">
-      <input type="text" id="chatInput" placeholder="Écris un message..." />
-      <button onclick="sendChat()">➤</button>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <button class="icon-btn" onclick="toggleSidebar()">☰</button>
+      <button class="icon-btn" onclick="newChat()">✏️</button>
     </div>
+    <div class="history" id="history"></div>
   </div>
 
-  <div id="texte" class="section">
-    <textarea id="texteInput" rows="4" placeholder="Décris ce que tu veux générer..."></textarea>
-    <button class="send" onclick="genererTexte()">Générer</button>
-    <div class="response" id="texteOutput">Le résultat apparaîtra ici...</div>
-  </div>
+  <div class="main">
+    <div class="topbar">
+      <button class="icon-btn" onclick="toggleSidebar()">☰</button>
+      <span class="model-badge">PANA 1.0</span>
+      <button class="icon-btn ghost">👻</button>
+    </div>
 
-  <div id="assistant" class="section">
-    <textarea id="assistantInput" rows="4" placeholder="Pose ta question..."></textarea>
-    <button class="send" onclick="askAssistant()">Demander</button>
-    <div class="response" id="assistantOutput">La réponse apparaîtra ici...</div>
+    <div class="chat-area" id="chatArea">
+      <div class="welcome">
+        <div class="logo">✳️</div>
+        <h1>Bonsoir, <span id="username">Moi</span></h1>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-box">
+        <button class="icon-btn">+</button>
+        <textarea id="userInput" placeholder="Discuter avec PANA..." rows="1"
+          oninput="autoResize(this)"
+          onkeydown="handleKey(event)"></textarea>
+        <button class="icon-btn">🎤</button>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+            <path d="M12 4l8 8-8 8V4z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="src/app.js"></script>
