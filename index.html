@@ -22,7 +22,7 @@
     <div class="topbar">
       <button class="icon-btn" onclick="toggleSidebar()">☰</button>
       <div class="upgrade-banner">PANA Pro <span class="upgrade-link">Mettre à niveau</span></div>
-      <button class="icon-btn" onclick="newChat()">✏️</button>
+      <button class="icon-btn" onclick="newChat()">:</button>
     </div>
 
     <div class="chat-area" id="chatArea">
@@ -40,7 +40,7 @@
           onkeydown="handleKey(event)"></textarea>
         <div class="input-footer">
           <div class="left-btns">
-            <button class="icon-btn" onclick="document.getElementById('imgInput').click()">🖼️</button>
+            <button class="icon-btn" onclick="document.getElementById('imgInput').click()" style="font-size:1.4em;font-weight:300;">+</button>
             <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="handleImage(event)"/>
             <span class="model-label">PANA 1.0</span>
           </div>

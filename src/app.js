@@ -4,8 +4,8 @@ const CONFIG = {
 
 let userName = localStorage.getItem('pana_name') || '';
 let currentImage = null;
+let chatHistory = [];
 
-// INIT
 window.onload = () => {
   if (userName) {
     startApp();
@@ -33,7 +33,6 @@ function startApp() {
   document.getElementById('greeting').textContent = `${greeting}, ${userName} 👋`;
 }
 
-// IMAGE
 function handleImage(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -52,7 +51,6 @@ function clearImage() {
   document.getElementById('imgInput').value = '';
 }
 
-// SEND
 async function sendMessage() {
   const input = document.getElementById('userInput');
   const msg = input.value.trim();
@@ -63,9 +61,11 @@ async function sendMessage() {
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
 
-  // Afficher message user
   const userText = currentImage ? `🖼️ ${msg || 'Image envoyée'}` : msg;
   addMessage(userText, 'user');
+
+  // Ajouter à l'historique
+  chatHistory.push({ role: 'user', content: msg || 'Analyse cette image' });
 
   const imgToSend = currentImage;
   clearImage();
@@ -74,15 +74,25 @@ async function sendMessage() {
   const reply = await callAI(msg, imgToSend);
   removeTyping(typingId);
   addMessage(reply, 'bot');
+
+  // Sauvegarder réponse dans historique
+  chatHistory.push({ role: 'assistant', content: reply });
+
+  // Garder max 20 messages en mémoire
+  if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
 }
 
 async function callAI(prompt, image) {
   try {
-    const body = { prompt, image: image || null, name: userName };
     const res = await fetch(CONFIG.API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        prompt,
+        image: image || null,
+        name: userName,
+        history: chatHistory.slice(0, -1) // tout sauf le dernier
+      })
     });
     return await res.text();
   } catch (e) {
@@ -90,13 +100,12 @@ async function callAI(prompt, image) {
   }
 }
 
-// MESSAGES
 function addMessage(text, role) {
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
   if (role === 'bot') {
-    div.innerHTML = `<div class="bot-header">✳️ PANA</div><div class="bot-content">${formatText(text)}</div>`;
+    div.innerHTML = `<div class="bot-header"><span class="star-logo">✦</span> PANA</div><div class="bot-content">${formatText(text)}</div>`;
   } else {
     div.textContent = text;
   }
@@ -105,12 +114,11 @@ function addMessage(text, role) {
 }
 
 function formatText(text) {
-  // Blocs de code avec boutons
   text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
     const id = 'code_' + Date.now() + Math.random().toString(36).substr(2,5);
     const escaped = code.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const isWeb = ['html','css','javascript','js'].includes((lang||'').toLowerCase());
-    const previewBtn = isWeb ? `<button onclick="previewCode('${id}')">👁️ Prévisualiser</button>` : '';
+    const previewBtn = isWeb ? `<button onclick="previewCode('${id}')">👁️ Aperçu</button>` : '';
     return `<div class="code-block">
       <div class="code-header">
         <span>${lang || 'code'}</span>
@@ -130,14 +138,12 @@ function formatText(text) {
 }
 
 function copyCode(id) {
-  const code = document.getElementById(id).innerText;
-  navigator.clipboard.writeText(code);
+  navigator.clipboard.writeText(document.getElementById(id).innerText);
 }
 
 function previewCode(id) {
-  const code = document.getElementById(id).innerText;
   document.getElementById('previewModal').style.display = 'flex';
-  document.getElementById('previewFrame').srcdoc = code;
+  document.getElementById('previewFrame').srcdoc = document.getElementById(id).innerText;
 }
 
 function closePreview() {
@@ -150,7 +156,9 @@ function addTyping() {
   const div = document.createElement('div');
   div.className = 'msg bot';
   div.id = id;
-  div.innerHTML = '<div class="bot-header">✳️ PANA</div><div class="typing">En train de réfléchir...</div>';
+  div.innerHTML = `
+    <div class="bot-header"><span class="star-logo thinking">✦</span> PANA</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>`;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
   return id;
@@ -162,8 +170,9 @@ function removeTyping(id) {
 }
 
 function newChat() {
+  chatHistory = [];
   const area = document.getElementById('chatArea');
-  area.innerHTML = `<div class="welcome" id="welcome"><div class="logo">✳️</div><h1>Bonsoir, ${userName} 👋</h1></div>`;
+  area.innerHTML = `<div class="welcome" id="welcome"><div class="star-welcome">✦</div><h1>Bonsoir, ${userName} 👋</h1></div>`;
 }
 
 function autoResize(el) {
