@@ -7,40 +7,33 @@
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-top">
-      <button class="icon-btn" onclick="toggleSidebar()">☰</button>
-      <button class="icon-btn" onclick="newChat()">✏️</button>
-    </div>
-    <div class="history" id="history"></div>
-  </div>
-
-  <div class="main">
+  <div class="app">
     <div class="topbar">
-      <button class="icon-btn" onclick="toggleSidebar()">☰</button>
-      <span class="model-badge">PANA 1.0</span>
-      <button class="icon-btn ghost">👻</button>
+      <button class="icon-btn">☰</button>
+      <div class="upgrade-banner">Accès illimité avec PANA Pro <span class="upgrade-link">Mettre à niveau</span></div>
+      <button class="icon-btn">👻</button>
     </div>
 
     <div class="chat-area" id="chatArea">
-      <div class="welcome">
+      <div class="welcome" id="welcome">
         <div class="logo">✳️</div>
-        <h1>Bonsoir, <span id="username">Moi</span></h1>
+        <h1 id="greeting">Bonjour, Moi</h1>
       </div>
     </div>
 
     <div class="input-area">
       <div class="input-box">
-        <button class="icon-btn">+</button>
         <textarea id="userInput" placeholder="Discuter avec PANA..." rows="1"
           oninput="autoResize(this)"
           onkeydown="handleKey(event)"></textarea>
-        <button class="icon-btn">🎤</button>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-            <path d="M12 4l8 8-8 8V4z"/>
-          </svg>
-        </button>
+        <div class="input-footer">
+          <button class="icon-btn">+</button>
+          <span class="model-label">PANA 1.0</span>
+          <div class="right-btns">
+            <button class="icon-btn">🎤</button>
+            <button class="send-btn" onclick="sendMessage()">▶</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
