@@ -2,40 +2,101 @@ const CONFIG = {
   API_URL: "https://patient-cell-api-serveur.gazoj1209.workers.dev",
 };
 
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Bonjour";
-  if (h < 18) return "Bon après-midi";
-  return "Bonsoir";
+let userName = localStorage.getItem('pana_name') || '';
+let currentImage = null;
+
+// INIT
+window.onload = () => {
+  if (userName) {
+    startApp();
+  } else {
+    document.getElementById('modal').style.display = 'flex';
+    document.getElementById('nameInput').addEventListener('keypress', e => {
+      if (e.key === 'Enter') saveName();
+    });
+  }
+};
+
+function saveName() {
+  const input = document.getElementById('nameInput').value.trim();
+  if (!input) return;
+  userName = input;
+  localStorage.setItem('pana_name', userName);
+  startApp();
 }
 
-document.getElementById('greeting').textContent = getGreeting() + ", Moi";
+function startApp() {
+  document.getElementById('modal').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  const h = new Date().getHours();
+  const greeting = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  document.getElementById('greeting').textContent = `${greeting}, ${userName} 👋`;
+}
 
+// IMAGE
+function handleImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentImage = e.target.result;
+    document.getElementById('imgPreview').src = currentImage;
+    document.getElementById('imgPreviewBox').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  currentImage = null;
+  document.getElementById('imgPreviewBox').style.display = 'none';
+  document.getElementById('imgInput').value = '';
+}
+
+// SEND
 async function sendMessage() {
   const input = document.getElementById('userInput');
   const msg = input.value.trim();
-  if (!msg) return;
+  if (!msg && !currentImage) return;
   input.value = '';
   autoResize(input);
 
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
 
-  addMessage(msg, 'user');
+  // Afficher message user
+  const userText = currentImage ? `🖼️ ${msg || 'Image envoyée'}` : msg;
+  addMessage(userText, 'user');
+
+  const imgToSend = currentImage;
+  clearImage();
+
   const typingId = addTyping();
-  const reply = await callAI(msg);
+  const reply = await callAI(msg, imgToSend);
   removeTyping(typingId);
   addMessage(reply, 'bot');
 }
 
+async function callAI(prompt, image) {
+  try {
+    const body = { prompt, image: image || null, name: userName };
+    const res = await fetch(CONFIG.API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return await res.text();
+  } catch (e) {
+    return "Erreur de connexion. Réessaie.";
+  }
+}
+
+// MESSAGES
 function addMessage(text, role) {
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = `msg ${role}`;
   if (role === 'bot') {
-    div.innerHTML = `
-      <div class="bot-header">✳️ PANA</div>
-      <div class="bot-content">${formatText(text)}</div>`;
+    div.innerHTML = `<div class="bot-header">✳️ PANA</div><div class="bot-content">${formatText(text)}</div>`;
   } else {
     div.textContent = text;
   }
@@ -44,11 +105,43 @@ function addMessage(text, role) {
 }
 
 function formatText(text) {
-  return text
-    .replace(/```(\w+)?\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
+  // Blocs de code avec boutons
+  text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+    const id = 'code_' + Date.now() + Math.random().toString(36).substr(2,5);
+    const escaped = code.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const isWeb = ['html','css','javascript','js'].includes((lang||'').toLowerCase());
+    const previewBtn = isWeb ? `<button onclick="previewCode('${id}')">👁️ Prévisualiser</button>` : '';
+    return `<div class="code-block">
+      <div class="code-header">
+        <span>${lang || 'code'}</span>
+        <div style="display:flex;gap:6px">
+          ${previewBtn}
+          <button onclick="copyCode('${id}')">📋 Copier</button>
+        </div>
+      </div>
+      <pre><code id="${id}">${escaped}</code></pre>
+    </div>`;
+  });
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  text = text.replace(/\n/g, '<br>');
+  return text;
+}
+
+function copyCode(id) {
+  const code = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(code);
+}
+
+function previewCode(id) {
+  const code = document.getElementById(id).innerText;
+  document.getElementById('previewModal').style.display = 'flex';
+  document.getElementById('previewFrame').srcdoc = code;
+}
+
+function closePreview() {
+  document.getElementById('previewModal').style.display = 'none';
 }
 
 function addTyping() {
@@ -68,18 +161,14 @@ function removeTyping(id) {
   if (el) el.remove();
 }
 
-async function callAI(prompt) {
-  try {
-    const res = await fetch(`${CONFIG.API_URL}?prompt=${encodeURIComponent(prompt)}`);
-    return await res.text();
-  } catch (e) {
-    return "Erreur de connexion. Réessaie.";
-  }
+function newChat() {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = `<div class="welcome" id="welcome"><div class="logo">✳️</div><h1>Bonsoir, ${userName} 👋</h1></div>`;
 }
 
 function autoResize(el) {
   el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
 }
 
 function handleKey(e) {
