@@ -7,10 +7,9 @@
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <!-- MODAL NOM -->
   <div class="modal" id="modal">
     <div class="modal-box">
-      <div class="logo-big">✳️</div>
+      <div class="logo-big">✦</div>
       <h2>Bienvenue sur PANA</h2>
       <p>Comment dois-je vous appeler ?</p>
       <input type="text" id="nameInput" placeholder="Votre prénom..." />
@@ -22,17 +21,18 @@
     <div class="topbar">
       <button class="icon-btn" onclick="toggleSidebar()">☰</button>
       <div class="upgrade-banner">PANA Pro <span class="upgrade-link">Mettre à niveau</span></div>
-      <button class="icon-btn" onclick="newChat()">:</button>
+      <button class="icon-btn" onclick="newChat()">✏️</button>
     </div>
 
     <div class="chat-area" id="chatArea">
       <div class="welcome" id="welcome">
-        <div class="logo">✳️</div>
+        <div class="star-welcome">✦</div>
         <h1 id="greeting">Bonjour</h1>
       </div>
     </div>
 
     <div class="input-area">
+      <div id="imgsPreviewBox" class="imgs-preview"></div>
       <div class="input-box">
         <textarea id="userInput" placeholder="Discuter avec PANA..."
           rows="1"
@@ -40,23 +40,18 @@
           onkeydown="handleKey(event)"></textarea>
         <div class="input-footer">
           <div class="left-btns">
-            <button class="icon-btn" onclick="document.getElementById('imgInput').click()" style="font-size:1.4em;font-weight:300;">+</button>
-            <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="handleImage(event)"/>
+            <button class="icon-btn add-btn" onclick="document.getElementById('imgInput').click()">+</button>
+            <input type="file" id="imgInput" accept="image/*" multiple style="display:none" onchange="handleImages(event)"/>
             <span class="model-label">PANA 1.0</span>
           </div>
           <div class="right-btns">
             <button class="send-btn" onclick="sendMessage()">▶</button>
           </div>
         </div>
-        <div id="imgPreviewBox" style="display:none; padding:8px 0;">
-          <img id="imgPreview" style="max-height:80px; border-radius:8px;"/>
-          <button onclick="clearImage()" style="background:none;border:none;color:#e8895e;cursor:pointer;margin-left:8px;">✕</button>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL PREVIEW CODE -->
   <div class="preview-modal" id="previewModal" style="display:none">
     <div class="preview-header">
       <span>Prévisualisation</span>

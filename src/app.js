@@ -3,7 +3,7 @@ const CONFIG = {
 };
 
 let userName = localStorage.getItem('pana_name') || '';
-let currentImage = null;
+let currentImages = [];
 let chatHistory = [];
 
 window.onload = () => {
@@ -33,40 +33,62 @@ function startApp() {
   document.getElementById('greeting').textContent = `${greeting}, ${userName} 👋`;
 }
 
-function handleImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    currentImage = e.target.result;
-    document.getElementById('imgPreview').src = currentImage;
-    document.getElementById('imgPreviewBox').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+function handleImages(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      currentImages.push(e.target.result);
+      renderImagePreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
 }
 
-function clearImage() {
-  currentImage = null;
-  document.getElementById('imgPreviewBox').style.display = 'none';
-  document.getElementById('imgInput').value = '';
+function renderImagePreviews() {
+  const box = document.getElementById('imgsPreviewBox');
+  if (currentImages.length === 0) {
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = currentImages.map((img, i) => `
+    <div class="img-thumb">
+      <img src="${img}" onclick="zoomImage('${img}')"/>
+      <button onclick="removeImage(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeImage(index) {
+  currentImages.splice(index, 1);
+  renderImagePreviews();
+}
+
+function zoomImage(src) {
+  const modal = document.getElementById('previewModal');
+  const frame = document.getElementById('previewFrame');
+  modal.style.display = 'flex';
+  frame.srcdoc = `<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><img src="${src}" style="max-width:100%;max-height:100vh"/></body></html>`;
 }
 
 async function sendMessage() {
   const input = document.getElementById('userInput');
   const msg = input.value.trim();
-  if (!msg && !currentImage) return;
+  if (!msg && currentImages.length === 0) return;
   input.value = '';
   autoResize(input);
 
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
 
-  const userText = currentImage ? `🖼️ ${msg || 'Image envoyée'}` : msg;
-  addMessage(userText, 'user');
-  chatHistory.push({ role: 'user', content: msg || 'Analyse cette image' });
+  // Afficher message user avec images
+  addUserMessage(msg, currentImages);
+  chatHistory.push({ role: 'user', content: msg || 'Analyse ces images' });
 
-  const imgToSend = currentImage;
-  clearImage();
+  const imagesToSend = [...currentImages];
+  currentImages = [];
+  renderImagePreviews();
 
   const typingId = addTyping();
 
@@ -76,7 +98,7 @@ async function sendMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: msg,
-        image: imgToSend || null,
+        images: imagesToSend,
         name: userName,
         history: chatHistory.slice(0, -1)
       })
@@ -94,7 +116,20 @@ async function sendMessage() {
   }
 }
 
-// Affichage progressif mot par mot
+function addUserMessage(text, images) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  let html = '';
+  if (images.length > 0) {
+    html += `<div class="user-imgs">${images.map(img => `<img src="${img}" onclick="zoomImage('${img}')"/>`).join('')}</div>`;
+  }
+  if (text) html += `<div>${text}</div>`;
+  div.innerHTML = html;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
 function typeMessage(text) {
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
@@ -118,7 +153,7 @@ function typeMessage(text) {
     contentEl.innerHTML = formatText(current) + '<span class="cursor">▌</span>';
     area.scrollTop = area.scrollHeight;
     i++;
-  }, 30);
+  }, 25);
 }
 
 function addMessage(text, role) {
@@ -190,9 +225,13 @@ function removeTyping(id) {
 
 function newChat() {
   chatHistory = [];
+  currentImages = [];
+  renderImagePreviews();
   const area = document.getElementById('chatArea');
   area.innerHTML = `<div class="welcome" id="welcome"><div class="star-welcome">✦</div><h1>Bonsoir, ${userName} 👋</h1></div>`;
 }
+
+function toggleSidebar() {}
 
 function autoResize(el) {
   el.style.height = 'auto';
