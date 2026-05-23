@@ -69,68 +69,56 @@ async function sendMessage() {
   clearImage();
 
   const typingId = addTyping();
-  const reply = await streamAI(msg, imgToSend, typingId);
-  chatHistory.push({ role: 'assistant', content: reply });
-  if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-}
 
-async function streamAI(prompt, image, typingId) {
   try {
     const res = await fetch(CONFIG.API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt,
-        image: image || null,
+        prompt: msg,
+        image: imgToSend || null,
         name: userName,
         history: chatHistory.slice(0, -1)
       })
     });
 
+    const reply = await res.text();
     removeTyping(typingId);
-
-    const area = document.getElementById('chatArea');
-    const div = document.createElement('div');
-    div.className = 'msg bot';
-    const contentId = 'sc_' + Date.now();
-    div.innerHTML = `<div class="bot-header"><span class="star-logo">✦</span> PANA</div><div class="bot-content" id="${contentId}"></div>`;
-    area.appendChild(div);
-
-    const contentEl = document.getElementById(contentId);
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('data: ') && !trimmed.includes('[DONE]')) {
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const token = json.choices?.[0]?.delta?.content || '';
-            if (token) {
-              fullText += token;
-              contentEl.innerHTML = formatText(fullText);
-              area.scrollTop = area.scrollHeight;
-            }
-          } catch {}
-        }
-      }
-    }
-
-    return fullText;
+    typeMessage(reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
 
   } catch (e) {
     removeTyping(typingId);
-    addMessage("Erreur: " + e.message, 'bot');
-    return '';
+    addMessage("Erreur de connexion. Réessaie.", 'bot');
   }
+}
+
+// Affichage progressif mot par mot
+function typeMessage(text) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  const contentId = 'sc_' + Date.now();
+  div.innerHTML = `<div class="bot-header"><span class="star-logo">✦</span> PANA</div><div class="bot-content" id="${contentId}"></div>`;
+  area.appendChild(div);
+
+  const contentEl = document.getElementById(contentId);
+  const words = text.split(' ');
+  let i = 0;
+  let current = '';
+
+  const interval = setInterval(() => {
+    if (i >= words.length) {
+      clearInterval(interval);
+      contentEl.innerHTML = formatText(text);
+      return;
+    }
+    current += (i > 0 ? ' ' : '') + words[i];
+    contentEl.innerHTML = formatText(current) + '<span class="cursor">▌</span>';
+    area.scrollTop = area.scrollHeight;
+    i++;
+  }, 30);
 }
 
 function addMessage(text, role) {

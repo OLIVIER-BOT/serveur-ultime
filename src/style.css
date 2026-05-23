@@ -63,3 +63,5 @@ textarea::placeholder { color:#555; }
 .preview-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#1c1c1c; border-bottom:1px solid #333; }
 .preview-header button { background:none; border:none; color:#e8895e; font-size:1.3em; cursor:pointer; }
 #previewFrame { flex:1; border:none; background:white; }
+.cursor { animation: blink 0.7s infinite; color: #e8895e; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
