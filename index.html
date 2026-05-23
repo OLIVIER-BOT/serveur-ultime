@@ -5,17 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PANA AI</title>
   <link rel="stylesheet" href="src/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <!-- MODAL NOM -->
-  <div class="modal" id="modal">
-    <div class="modal-box">
+  <!-- AUTH -->
+  <div class="auth-screen" id="authScreen">
+    <div class="auth-box">
       <div class="logo-big">✦</div>
-      <h2>Bienvenue sur PANA</h2>
-      <p>Comment dois-je vous appeler ?</p>
-      <input type="text" id="nameInput" placeholder="Votre prénom..."/>
-      <button onclick="saveName()">Commencer ▶</button>
+      <h2>PANA AI</h2>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="showTab('login')">Connexion</button>
+        <button class="auth-tab" onclick="showTab('register')">Inscription</button>
+      </div>
+      <div id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email"/>
+        <input type="password" id="loginPassword" placeholder="Mot de passe"/>
+        <button onclick="login()">Se connecter</button>
+      </div>
+      <div id="registerForm" style="display:none">
+        <input type="text" id="registerName" placeholder="Prénom"/>
+        <input type="email" id="registerEmail" placeholder="Email"/>
+        <input type="password" id="registerPassword" placeholder="Mot de passe"/>
+        <button onclick="register()">Créer un compte</button>
+      </div>
+      <p class="auth-error" id="authError"></p>
     </div>
   </div>
 
@@ -28,9 +42,7 @@
       <span>PANA</span>
       <button class="icon-btn" onclick="closeSidebar()">✕</button>
     </div>
-    <button class="new-chat-btn" onclick="newChat()">
-      ✏️ Nouvelle conversation
-    </button>
+    <button class="new-chat-btn" onclick="newChat()">✏️ Nouvelle conversation</button>
     <div class="history-section">
       <h4>Aujourd'hui</h4>
       <div id="historyList"></div>
@@ -38,8 +50,12 @@
     <div class="sidebar-bottom">
       <div class="user-info">
         <div class="avatar" id="avatarLetter">?</div>
-        <div class="user-name" id="sidebarName">Chargement...</div>
+        <div>
+          <div class="user-name" id="sidebarName">...</div>
+          <div class="user-email" id="sidebarEmail">...</div>
+        </div>
       </div>
+      <button class="logout-btn" onclick="logout()">🚪 Déconnexion</button>
     </div>
   </div>
 
@@ -50,21 +66,17 @@
       <div class="upgrade-banner">PANA Pro <span class="upgrade-link">Mettre à niveau</span></div>
       <button class="icon-btn" onclick="newChat()">✏️</button>
     </div>
-
     <div class="chat-area" id="chatArea">
       <div class="welcome" id="welcome">
         <div class="star-welcome">✦</div>
         <h1 id="greeting">Bonjour</h1>
       </div>
     </div>
-
     <div class="input-area">
       <div id="imgsPreviewBox" class="imgs-preview"></div>
       <div class="input-box">
         <textarea id="userInput" placeholder="Discuter avec PANA..."
-          rows="1"
-          oninput="autoResize(this)"
-          onkeydown="handleKey(event)"></textarea>
+          rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
         <div class="input-footer">
           <div class="left-btns">
             <button class="icon-btn" onclick="document.getElementById('imgInput').click()" style="font-size:1.4em;font-weight:300;">+</button>
@@ -79,7 +91,6 @@
     </div>
   </div>
 
-  <!-- PREVIEW CODE -->
   <div class="preview-modal" id="previewModal" style="display:none">
     <div class="preview-header">
       <span>Prévisualisation</span>
