@@ -7,16 +7,43 @@
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
+
+  <!-- MODAL NOM -->
   <div class="modal" id="modal">
     <div class="modal-box">
       <div class="logo-big">✦</div>
       <h2>Bienvenue sur PANA</h2>
       <p>Comment dois-je vous appeler ?</p>
-      <input type="text" id="nameInput" placeholder="Votre prénom..." />
+      <input type="text" id="nameInput" placeholder="Votre prénom..."/>
       <button onclick="saveName()">Commencer ▶</button>
     </div>
   </div>
 
+  <!-- OVERLAY -->
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <span>PANA</span>
+      <button class="icon-btn" onclick="closeSidebar()">✕</button>
+    </div>
+    <button class="new-chat-btn" onclick="newChat()">
+      ✏️ Nouvelle conversation
+    </button>
+    <div class="history-section">
+      <h4>Aujourd'hui</h4>
+      <div id="historyList"></div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="avatar" id="avatarLetter">?</div>
+        <div class="user-name" id="sidebarName">Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
   <div class="app" id="app" style="display:none">
     <div class="topbar">
       <button class="icon-btn" onclick="toggleSidebar()">☰</button>
@@ -40,7 +67,7 @@
           onkeydown="handleKey(event)"></textarea>
         <div class="input-footer">
           <div class="left-btns">
-            <button class="icon-btn add-btn" onclick="document.getElementById('imgInput').click()">+</button>
+            <button class="icon-btn" onclick="document.getElementById('imgInput').click()" style="font-size:1.4em;font-weight:300;">+</button>
             <input type="file" id="imgInput" accept="image/*" multiple style="display:none" onchange="handleImages(event)"/>
             <span class="model-label">PANA 1.0</span>
           </div>
@@ -52,6 +79,7 @@
     </div>
   </div>
 
+  <!-- PREVIEW CODE -->
   <div class="preview-modal" id="previewModal" style="display:none">
     <div class="preview-header">
       <span>Prévisualisation</span>

@@ -5,6 +5,7 @@ const CONFIG = {
 let userName = localStorage.getItem('pana_name') || '';
 let currentImages = [];
 let chatHistory = [];
+let conversations = JSON.parse(localStorage.getItem('pana_convs') || '[]');
 
 window.onload = () => {
   if (userName) {
@@ -31,6 +32,33 @@ function startApp() {
   const h = new Date().getHours();
   const greeting = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
   document.getElementById('greeting').textContent = `${greeting}, ${userName} 👋`;
+  updateSidebar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function updateSidebar() {
+  document.getElementById('sidebarName').textContent = userName;
+  document.getElementById('avatarLetter').textContent = userName.charAt(0).toUpperCase();
+  const list = document.getElementById('historyList');
+  list.innerHTML = conversations.slice().reverse().map((c, i) =>
+    `<div class="history-item">💬 ${c.title}</div>`
+  ).join('');
+}
+
+function saveConversation(firstMsg) {
+  conversations.push({ title: firstMsg.substring(0, 30) });
+  if (conversations.length > 20) conversations.shift();
+  localStorage.setItem('pana_convs', JSON.stringify(conversations));
+  updateSidebar();
 }
 
 function handleImages(event) {
@@ -48,10 +76,7 @@ function handleImages(event) {
 
 function renderImagePreviews() {
   const box = document.getElementById('imgsPreviewBox');
-  if (currentImages.length === 0) {
-    box.innerHTML = '';
-    return;
-  }
+  if (currentImages.length === 0) { box.innerHTML = ''; return; }
   box.innerHTML = currentImages.map((img, i) => `
     <div class="img-thumb">
       <img src="${img}" onclick="zoomImage('${img}')"/>
@@ -66,10 +91,8 @@ function removeImage(index) {
 }
 
 function zoomImage(src) {
-  const modal = document.getElementById('previewModal');
-  const frame = document.getElementById('previewFrame');
-  modal.style.display = 'flex';
-  frame.srcdoc = `<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><img src="${src}" style="max-width:100%;max-height:100vh"/></body></html>`;
+  document.getElementById('previewModal').style.display = 'flex';
+  document.getElementById('previewFrame').srcdoc = `<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><img src="${src}" style="max-width:100%;max-height:100vh"/></body></html>`;
 }
 
 async function sendMessage() {
@@ -82,7 +105,8 @@ async function sendMessage() {
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
 
-  // Afficher message user avec images
+  if (chatHistory.length === 0 && msg) saveConversation(msg);
+
   addUserMessage(msg, currentImages);
   chatHistory.push({ role: 'user', content: msg || 'Analyse ces images' });
 
@@ -137,12 +161,9 @@ function typeMessage(text) {
   const contentId = 'sc_' + Date.now();
   div.innerHTML = `<div class="bot-header"><span class="star-logo">✦</span> PANA</div><div class="bot-content" id="${contentId}"></div>`;
   area.appendChild(div);
-
   const contentEl = document.getElementById(contentId);
   const words = text.split(' ');
-  let i = 0;
-  let current = '';
-
+  let i = 0, current = '';
   const interval = setInterval(() => {
     if (i >= words.length) {
       clearInterval(interval);
@@ -175,16 +196,7 @@ function formatText(text) {
     const escaped = code.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const isWeb = ['html','css','javascript','js'].includes((lang||'').toLowerCase());
     const previewBtn = isWeb ? `<button onclick="previewCode('${id}')">👁️ Aperçu</button>` : '';
-    return `<div class="code-block">
-      <div class="code-header">
-        <span>${lang||'code'}</span>
-        <div style="display:flex;gap:6px">
-          ${previewBtn}
-          <button onclick="copyCode('${id}')">📋 Copier</button>
-        </div>
-      </div>
-      <pre><code id="${id}">${escaped}</code></pre>
-    </div>`;
+    return `<div class="code-block"><div class="code-header"><span>${lang||'code'}</span><div style="display:flex;gap:6px">${previewBtn}<button onclick="copyCode('${id}')">📋 Copier</button></div></div><pre><code id="${id}">${escaped}</code></pre></div>`;
   });
   text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -227,11 +239,10 @@ function newChat() {
   chatHistory = [];
   currentImages = [];
   renderImagePreviews();
+  closeSidebar();
   const area = document.getElementById('chatArea');
-  area.innerHTML = `<div class="welcome" id="welcome"><div class="star-welcome">✦</div><h1>Bonsoir, ${userName} 👋</h1></div>`;
+  area.innerHTML = `<div class="welcome" id="welcome"><div class="star-welcome">✦</div><h1>${document.getElementById('greeting').textContent}</h1></div>`;
 }
-
-function toggleSidebar() {}
 
 function autoResize(el) {
   el.style.height = 'auto';
