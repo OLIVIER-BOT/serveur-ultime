@@ -63,26 +63,18 @@ async function sendMessage() {
 
   const userText = currentImage ? `🖼️ ${msg || 'Image envoyée'}` : msg;
   addMessage(userText, 'user');
-
-  // Ajouter à l'historique
   chatHistory.push({ role: 'user', content: msg || 'Analyse cette image' });
 
   const imgToSend = currentImage;
   clearImage();
 
   const typingId = addTyping();
-  const reply = await callAI(msg, imgToSend);
-  removeTyping(typingId);
-  addMessage(reply, 'bot');
-
-  // Sauvegarder réponse dans historique
+  const reply = await streamAI(msg, imgToSend, typingId);
   chatHistory.push({ role: 'assistant', content: reply });
-
-  // Garder max 20 messages en mémoire
   if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
 }
 
-async function callAI(prompt, image) {
+async function streamAI(prompt, image, typingId) {
   try {
     const res = await fetch(CONFIG.API_URL, {
       method: 'POST',
@@ -91,12 +83,53 @@ async function callAI(prompt, image) {
         prompt,
         image: image || null,
         name: userName,
-        history: chatHistory.slice(0, -1) // tout sauf le dernier
+        history: chatHistory.slice(0, -1)
       })
     });
-    return await res.text();
+
+    removeTyping(typingId);
+
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    const contentId = 'sc_' + Date.now();
+    div.innerHTML = `<div class="bot-header"><span class="star-logo">✦</span> PANA</div><div class="bot-content" id="${contentId}"></div>`;
+    area.appendChild(div);
+
+    const contentEl = document.getElementById(contentId);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data: ') && !trimmed.includes('[DONE]')) {
+          try {
+            const json = JSON.parse(trimmed.slice(6));
+            const token = json.choices?.[0]?.delta?.content || '';
+            if (token) {
+              fullText += token;
+              contentEl.innerHTML = formatText(fullText);
+              area.scrollTop = area.scrollHeight;
+            }
+          } catch {}
+        }
+      }
+    }
+
+    return fullText;
+
   } catch (e) {
-    return "Erreur de connexion. Réessaie.";
+    removeTyping(typingId);
+    addMessage("Erreur: " + e.message, 'bot');
+    return '';
   }
 }
 
@@ -121,7 +154,7 @@ function formatText(text) {
     const previewBtn = isWeb ? `<button onclick="previewCode('${id}')">👁️ Aperçu</button>` : '';
     return `<div class="code-block">
       <div class="code-header">
-        <span>${lang || 'code'}</span>
+        <span>${lang||'code'}</span>
         <div style="display:flex;gap:6px">
           ${previewBtn}
           <button onclick="copyCode('${id}')">📋 Copier</button>
@@ -156,9 +189,7 @@ function addTyping() {
   const div = document.createElement('div');
   div.className = 'msg bot';
   div.id = id;
-  div.innerHTML = `
-    <div class="bot-header"><span class="star-logo thinking">✦</span> PANA</div>
-    <div class="typing-dots"><span></span><span></span><span></span></div>`;
+  div.innerHTML = `<div class="bot-header"><span class="star-logo thinking">✦</span> PANA</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
   return id;
