@@ -114,7 +114,28 @@ async function sendMessage() {
   currentImages = [];
   renderImagePreviews();
 
+  // Détecter lien vidéo
+const videoRegex = /(https?:\/\/(www\.)?(youtube|youtu\.be|tiktok|instagram|twitter|x\.com)[\S]+)/i;
+const videoMatch = msg.match(videoRegex);
+if (videoMatch) {
   const typingId = addTyping();
+  const result = await downloadVideo(videoMatch[0]);
+  removeTyping(typingId);
+  addMessage(result, 'bot');
+  return;
+}
+
+// Détecter demande de génération image
+const imageKeywords = ['génère une image', 'crée une image', 'dessine', 'generate image', 'image de', 'image d\'un', 'image d\'une'];
+const wantsImage = imageKeywords.some(k => msg.toLowerCase().includes(k));
+if (wantsImage) {
+  const prompt = msg.replace(/génère une image|crée une image|dessine|generate image/gi, '').trim();
+  addMessage(`Je génère une image de "${prompt}"...`, 'bot');
+  generateImage(prompt);
+  return;
+}
+
+const typingId = addTyping();
 
   try {
     const res = await fetch(CONFIG.API_URL, {
@@ -254,4 +275,45 @@ function handleKey(e) {
     e.preventDefault();
     sendMessage();
   }
+// TÉLÉCHARGEMENT VIDÉO
+async function downloadVideo(url) {
+  try {
+    const res = await fetch('https://api.cobalt.tools/api/json', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ url, vCodec: 'h264', vQuality: '720', filenamePattern: 'basic' })
+    });
+    const data = await res.json();
+    if (data.url) {
+      const a = document.createElement('a');
+      a.href = data.url;
+      a.download = 'video.mp4';
+      a.click();
+      return '✅ Téléchargement démarré !';
+    }
+    return '❌ Impossible de télécharger cette vidéo.';
+  } catch (e) {
+    return '❌ Erreur : ' + e.message;
+  }
+}
+
+// GÉNÉRATION IMAGE
+function generateImage(prompt) {
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true`;
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = `
+    <div class="bot-header"><span class="star-logo">✦</span> PANA</div>
+    <div class="bot-content">
+      <img src="${url}" style="max-width:100%;border-radius:12px;margin-top:8px;" 
+           onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s"/>
+      <br><small style="color:#666">Image générée pour : "${prompt}"</small>
+    </div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
 }
