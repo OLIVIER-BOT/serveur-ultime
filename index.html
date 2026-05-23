@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PANA AI</title>
   <link rel="stylesheet" href="src/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -15,8 +14,8 @@
       <div class="logo-big">✦</div>
       <h2>PANA AI</h2>
       <div class="auth-tabs">
-        <button class="auth-tab active" onclick="showTab('login')">Connexion</button>
-        <button class="auth-tab" onclick="showTab('register')">Inscription</button>
+        <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Connexion</button>
+        <button class="auth-tab" id="tab-register" onclick="showTab('register')">Inscription</button>
       </div>
       <div id="loginForm">
         <input type="email" id="loginEmail" placeholder="Email"/>
@@ -100,12 +99,5 @@
   </div>
 
   <script src="src/app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="src/app.js"></script>
-<script>
-  window.onerror = function(msg, src, line) {
-    document.body.innerHTML += '<p style="color:red;position:fixed;bottom:0;left:0;background:#000;padding:10px;font-size:12px">' + msg + ' (ligne ' + line + ')</p>';
-  };
-</script>
 </body>
 </html>

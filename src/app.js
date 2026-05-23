@@ -4,64 +4,75 @@ const CONFIG = {
   SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
 };
 
-let supabase = null;
-try {
-  supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
-} catch(e) {
-  console.error('Supabase error:', e);
-}
-
 let userName = '';
 let userEmail = '';
 let currentImages = [];
 let chatHistory = [];
-let conversations = [];
 
-// AUTH
-window.onload = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    await loadUser(session.user);
+// AUTH SIMPLE SANS SUPABASE (localStorage)
+window.onload = () => {
+  const saved = localStorage.getItem('pana_user');
+  if (saved) {
+    const user = JSON.parse(saved);
+    startApp(user.name, user.email);
   }
 };
 
 function showTab(tab) {
   document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-  document.querySelectorAll('.auth-tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0) === (tab === 'login'));
-  });
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
 }
 
-async function login() {
+function login() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) { document.getElementById('authError').textContent = error.message; return; }
-  await loadUser(data.user);
+  if (!email || !password) {
+    document.getElementById('authError').textContent = 'Remplis tous les champs';
+    return;
+  }
+  const users = JSON.parse(localStorage.getItem('pana_users') || '{}');
+  if (!users[email] || users[email].password !== password) {
+    document.getElementById('authError').textContent = 'Email ou mot de passe incorrect';
+    return;
+  }
+  const user = users[email];
+  localStorage.setItem('pana_user', JSON.stringify(user));
+  startApp(user.name, email);
 }
 
-async function register() {
+function register() {
   const name = document.getElementById('registerName').value.trim();
   const email = document.getElementById('registerEmail').value.trim();
   const password = document.getElementById('registerPassword').value;
-  if (!name) { document.getElementById('authError').textContent = 'Entre ton prénom'; return; }
-  const { data, error } = await supabase.auth.signUp({
-    email, password,
-    options: { data: { full_name: name } }
-  });
-  if (error) { document.getElementById('authError').textContent = error.message; return; }
-  await loadUser(data.user);
+  if (!name || !email || !password) {
+    document.getElementById('authError').textContent = 'Remplis tous les champs';
+    return;
+  }
+  if (password.length < 6) {
+    document.getElementById('authError').textContent = 'Mot de passe minimum 6 caractères';
+    return;
+  }
+  const users = JSON.parse(localStorage.getItem('pana_users') || '{}');
+  if (users[email]) {
+    document.getElementById('authError').textContent = 'Email déjà utilisé';
+    return;
+  }
+  users[email] = { name, email, password };
+  localStorage.setItem('pana_users', JSON.stringify(users));
+  localStorage.setItem('pana_user', JSON.stringify({ name, email }));
+  startApp(name, email);
 }
 
-async function logout() {
-  await supabase.auth.signOut();
+function logout() {
+  localStorage.removeItem('pana_user');
   location.reload();
 }
 
-async function loadUser(user) {
-  userName = user.user_metadata?.full_name || user.email.split('@')[0];
-  userEmail = user.email;
+function startApp(name, email) {
+  userName = name;
+  userEmail = email;
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   const h = new Date().getHours();
@@ -70,30 +81,8 @@ async function loadUser(user) {
   document.getElementById('sidebarName').textContent = userName;
   document.getElementById('sidebarEmail').textContent = userEmail;
   document.getElementById('avatarLetter').textContent = userName.charAt(0).toUpperCase();
-  await loadHistory(user.id);
 }
 
-async function loadHistory(userId) {
-  const { data } = await supabase
-    .from('historique')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(20);
-  if (data) {
-    conversations = data;
-    renderHistory();
-  }
-}
-
-function renderHistory() {
-  const list = document.getElementById('historyList');
-  list.innerHTML = conversations.map(c =>
-    `<div class="history-item">💬 ${c.message.substring(0, 30)}</div>`
-  ).join('');
-}
-
-// SIDEBAR
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('overlay').classList.toggle('show');
@@ -104,7 +93,6 @@ function closeSidebar() {
   document.getElementById('overlay').classList.remove('show');
 }
 
-// IMAGES
 function handleImages(event) {
   Array.from(event.target.files).forEach(file => {
     const reader = new FileReader();
@@ -131,14 +119,12 @@ function zoomImage(src) {
   document.getElementById('previewFrame').srcdoc = `<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><img src="${src}" style="max-width:100%;max-height:100vh"/></body></html>`;
 }
 
-// MESSAGE
 async function sendMessage() {
   const input = document.getElementById('userInput');
   const msg = input.value.trim();
   if (!msg && !currentImages.length) return;
   input.value = '';
   autoResize(input);
-
   document.getElementById('welcome')?.remove();
 
   const videoRegex = /(https?:\/\/(www\.)?(youtube|youtu\.be|tiktok|instagram|twitter|x\.com)[\S]+)/i;
@@ -156,14 +142,12 @@ async function sendMessage() {
   if (imageKeywords.some(k => msg.toLowerCase().includes(k))) {
     addUserMessage(msg, []);
     const prompt = msg.replace(/génère une image|crée une image|dessine/gi, '').trim();
-    addMessage(`🎨 Génération en cours...`, 'bot');
     generateImage(prompt);
     return;
   }
 
   addUserMessage(msg, currentImages);
   chatHistory.push({ role: 'user', content: msg || 'Analyse ces images' });
-
   const imagesToSend = [...currentImages];
   currentImages = [];
   renderImagePreviews();
@@ -180,17 +164,19 @@ async function sendMessage() {
     typeMessage(reply);
     chatHistory.push({ role: 'assistant', content: reply });
     if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-
-    // Sauvegarder dans Supabase
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      await supabase.from('historique').insert({ user_id: session.user.id, message: msg, reponse: reply });
-      await loadHistory(session.user.id);
-    }
+    updateHistory(msg);
   } catch (e) {
     removeTyping(typingId);
     addMessage("Erreur de connexion.", 'bot');
   }
+}
+
+function updateHistory(msg) {
+  const list = document.getElementById('historyList');
+  const div = document.createElement('div');
+  div.className = 'history-item';
+  div.textContent = '💬 ' + msg.substring(0, 30);
+  list.prepend(div);
 }
 
 function addUserMessage(text, images) {
@@ -229,7 +215,7 @@ function addMessage(text, role) {
   div.className = `msg ${role}`;
   div.innerHTML = role === 'bot'
     ? `<div class="bot-header"><span class="star-logo">✦</span> PANA</div><div class="bot-content">${formatText(text)}</div>`
-    : text;
+    : `<div>${text}</div>`;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
 }
@@ -287,7 +273,7 @@ async function downloadVideo(url) {
       a.href = data.url; a.download = 'video.mp4'; a.click();
       return '✅ Téléchargement démarré !';
     }
-    return '❌ Impossible de télécharger cette vidéo.';
+    return '❌ Impossible de télécharger.';
   } catch (e) { return '❌ Erreur : ' + e.message; }
 }
 
@@ -297,12 +283,13 @@ function generateImage(prompt) {
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = 'msg bot';
+  const statusId = 'img_' + Date.now();
   div.innerHTML = `<div class="bot-header"><span class="star-logo">✦</span> PANA</div>
     <div class="bot-content">
-      <p id="imgStatus" style="color:#888;margin-bottom:8px;">🎨 Génération en cours...</p>
+      <p id="${statusId}" style="color:#888;margin-bottom:8px;">🎨 Génération en cours...</p>
       <img src="${url}" style="max-width:100%;border-radius:12px;display:block;"
-        onload="document.getElementById('imgStatus').textContent='✅ Image générée !'"
-        onerror="document.getElementById('imgStatus').textContent='❌ Erreur'"/>
+        onload="document.getElementById('${statusId}').textContent='✅ Image générée !'"
+        onerror="document.getElementById('${statusId}').textContent='❌ Erreur de génération'"/>
       <small style="color:#666;display:block;margin-top:6px;">"${clean}"</small>
     </div>`;
   area.appendChild(div);
