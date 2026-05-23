@@ -2,3 +2,4 @@ worker.js
 .env
 worker.js
 .env
+worker-deploy.js
