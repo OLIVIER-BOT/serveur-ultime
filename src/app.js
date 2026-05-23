@@ -4,7 +4,12 @@ const CONFIG = {
   SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
 };
 
-const supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+let supabase = null;
+try {
+  supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+} catch(e) {
+  console.error('Supabase error:', e);
+}
 
 let userName = '';
 let userEmail = '';
