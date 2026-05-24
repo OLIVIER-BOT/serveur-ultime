@@ -3,313 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PANA - Auth Test</title>
+  <title>PANA AI</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:#0a0a0a;
-      color:#e0e0e0;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+    .bg{position:fixed;inset:0;z-index:0;}
+    .bg-circle{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.12;animation:float 8s ease-in-out infinite;}
+    .bg-circle:nth-child(1){width:500px;height:500px;background:#00c853;top:-150px;left:-150px;animation-delay:0s;}
+    .bg-circle:nth-child(2){width:400px;height:400px;background:#00897b;bottom:-100px;right:-100px;animation-delay:3s;}
+    .bg-circle:nth-child(3){width:250px;height:250px;background:#1b5e20;top:40%;left:40%;animation-delay:5s;}
+    @keyframes float{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(20px,-20px) scale(1.05);}}
+    .particles{position:fixed;inset:0;z-index:0;pointer-events:none;}
+    .particle{position:absolute;border-radius:50%;opacity:0;animation:rise linear infinite;}
+    @keyframes rise{0%{opacity:0;transform:translateY(100vh) scale(0);}10%{opacity:0.7;}90%{opacity:0.7;}100%{opacity:0;transform:translateY(-50px) scale(1);}}
+    .card{position:relative;z-index:10;width:92%;max-width:390px;background:rgba(10,10,10,0.85);border:1px solid rgba(0,200,83,0.25);border-radius:28px;padding:44px 32px;backdrop-filter:blur(30px);box-shadow:0 0 80px rgba(0,200,83,0.12),inset 0 0 40px rgba(0,200,83,0.03);animation:cardIn 0.7s cubic-bezier(0.34,1.56,0.64,1);}
+    @keyframes cardIn{from{opacity:0;transform:translateY(50px) scale(0.9);}to{opacity:1;transform:translateY(0) scale(1);}}
+    .logo-wrap{text-align:center;margin-bottom:32px;}
+    .logo-icon{font-size:3.8em;display:block;color:#00c853;margin-bottom:10px;animation:spin 4s linear infinite;filter:drop-shadow(0 0 12px #00c853);}
+    @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+    .logo-title{font-size:2em;font-weight:200;letter-spacing:6px;color:#fff;text-transform:uppercase;}
+    .logo-sub{font-size:0.72em;color:#444;margin-top:5px;letter-spacing:3px;text-transform:uppercase;}
+    .tabs{display:flex;background:#0f0f0f;border-radius:16px;padding:5px;margin-bottom:28px;border:1px solid #1a1a1a;gap:4px;}
+    .tab{flex:1;padding:11px;border:none;background:transparent;color:#555;border-radius:12px;cursor:pointer;font-size:0.9em;font-family:inherit;transition:all 0.3s;font-weight:500;}
+    .tab.active{background:linear-gradient(135deg,#00c853,#00897b);color:#000;font-weight:700;box-shadow:0 4px 20px rgba(0,200,83,0.35);}
+    .input-group{position:relative;margin-bottom:14px;}
+    .input-group input{width:100%;padding:15px 16px 15px 46px;background:#0f0f0f;border:1px solid #1e1e1e;border-radius:14px;color:#e0e0e0;font-size:0.95em;outline:none;font-family:inherit;transition:all 0.3s;}
+    .input-group input:focus{border-color:#00c853;box-shadow:0 0 25px rgba(0,200,83,0.12);background:#111;}
+    .input-group input::placeholder{color:#333;}
+    .input-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:1em;transition:all 0.3s;opacity:0.4;}
+    .input-group input:focus~.input-icon{opacity:1;}
+    .strength{height:3px;background:#1a1a1a;border-radius:2px;margin-top:6px;overflow:hidden;}
+    .strength-bar{height:100%;border-radius:2px;transition:all 0.4s;width:0%;}
+    .btn{width:100%;padding:15px;background:linear-gradient(135deg,#00c853,#00897b);border:none;border-radius:14px;color:#000;font-size:1em;font-weight:800;cursor:pointer;font-family:inherit;margin-top:10px;letter-spacing:2px;transition:all 0.3s;position:relative;overflow:hidden;}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,200,83,0.4);}
+    .btn:active{transform:scale(0.98);}
+    .btn.loading{opacity:0.6;pointer-events:none;}
+    .btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transition:left 0.5s;}
+    .btn:hover::before{left:100%;}
+    
+    /* Style du bouton Google (identique à celui demandé) */
+    .google-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background-color: white;
+        color: #1f1f1f;
+        border: 1px solid #dadce0;
+        border-radius: 50px;
+        padding: 0 12px;
+        height: 48px;
+        font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.25px;
+        cursor: pointer;
+        transition: background-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        margin-top: 12px;
+    }
+    .google-btn:hover {
+        background-color: #f8f9fa;
+        border-color: #d2e3fc;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .google-btn:active {
+        background-color: #f1f3f4;
+    }
+    .google-icon {
+        width: 20px;
+        height: 20px;
+    }
+    .separator {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: #555;
+        font-size: 12px;
+        margin: 16px 0 8px;
+    }
+    .separator::before,
+    .separator::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #222;
+    }
+    .separator::before {
+        margin-right: 10px;
+    }
+    .separator::after {
+        margin-left: 10px;
     }
 
-    /* FOND ANIMÉ */
-    .bg {
-      position:fixed;
-      inset:0;
-      z-index:0;
-    }
-    .bg-circle {
-      position:absolute;
-      border-radius:50%;
-      filter:blur(80px);
-      opacity:0.15;
-      animation:float 8s ease-in-out infinite;
-    }
-    .bg-circle:nth-child(1) { width:400px; height:400px; background:#00c853; top:-100px; left:-100px; animation-delay:0s; }
-    .bg-circle:nth-child(2) { width:300px; height:300px; background:#00897b; bottom:-50px; right:-50px; animation-delay:3s; }
-    .bg-circle:nth-child(3) { width:200px; height:200px; background:#1b5e20; top:50%; left:50%; animation-delay:6s; }
-    @keyframes float {
-      0%,100% { transform:translate(0,0) scale(1); }
-      50% { transform:translate(30px,-30px) scale(1.1); }
-    }
-
-    /* PARTICULES */
-    .particles { position:fixed; inset:0; z-index:0; }
-    .particle {
-      position:absolute;
-      width:2px; height:2px;
-      background:#00c853;
-      border-radius:50%;
-      opacity:0;
-      animation:particle 6s ease-in-out infinite;
-    }
-    @keyframes particle {
-      0% { opacity:0; transform:translateY(100vh) scale(0); }
-      10% { opacity:0.6; }
-      90% { opacity:0.6; }
-      100% { opacity:0; transform:translateY(-100px) scale(1); }
-    }
-
-    /* CARTE */
-    .card {
-      position:relative;
-      z-index:10;
-      width:90%;
-      max-width:380px;
-      background:rgba(15,15,15,0.8);
-      border:1px solid rgba(0,200,83,0.2);
-      border-radius:24px;
-      padding:40px 32px;
-      backdrop-filter:blur(20px);
-      box-shadow:0 0 60px rgba(0,200,83,0.1);
-      animation:cardIn 0.6s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    @keyframes cardIn {
-      from { opacity:0; transform:translateY(40px) scale(0.95); }
-      to { opacity:1; transform:translateY(0) scale(1); }
-    }
-
-    /* LOGO */
-    .logo-wrap {
-      text-align:center;
-      margin-bottom:28px;
-    }
-    .logo-icon {
-      font-size:3.5em;
-      display:block;
-      animation:logoPulse 2s ease-in-out infinite;
-      color:#00c853;
-      margin-bottom:8px;
-    }
-    @keyframes logoPulse {
-   0% { transform:scale(1) rotate(0deg); filter:drop-shadow(0 0 8px #00c853); }
-100% { transform:scale(1.15) rotate(360deg); filter:drop-shadow(0 0 20px #00c853); 
-}
-    .logo-title {
-      font-size:1.8em;
-      font-weight:200;
-      letter-spacing:4px;
-      color:#fff;
-    }
-    .logo-sub {
-      font-size:0.8em;
-      color:#555;
-      margin-top:4px;
-      letter-spacing:2px;
-    }
-
-    /* TABS */
-    .tabs {
-      display:flex;
-      background:#111;
-      border-radius:14px;
-      padding:4px;
-      margin-bottom:28px;
-      border:1px solid #222;
-    }
-    .tab {
-      flex:1;
-      padding:10px;
-      border:none;
-      background:transparent;
-      color:#666;
-      border-radius:10px;
-      cursor:pointer;
-      font-size:0.9em;
-      font-family:inherit;
-      transition:all 0.3s;
-      position:relative;
-      overflow:hidden;
-    }
-    .tab.active {
-      background:#00c853;
-      color:#000;
-      font-weight:600;
-      box-shadow:0 4px 15px rgba(0,200,83,0.4);
-    }
-    .tab::before {
-      content:'';
-      position:absolute;
-      inset:0;
-      background:rgba(255,255,255,0.1);
-      transform:translateX(-100%);
-      transition:transform 0.3s;
-    }
-    .tab:hover::before { transform:translateX(0); }
-
-    /* FORM */
-    .form { animation:formIn 0.4s ease; }
-    @keyframes formIn {
-      from { opacity:0; transform:translateX(20px); }
-      to { opacity:1; transform:translateX(0); }
-    }
-
-    .input-group {
-      position:relative;
-      margin-bottom:16px;
-    }
-    .input-group input {
-      width:100%;
-      padding:14px 16px 14px 44px;
-      background:#111;
-      border:1px solid #222;
-      border-radius:14px;
-      color:#e0e0e0;
-      font-size:0.95em;
-      outline:none;
-      font-family:inherit;
-      transition:all 0.3s;
-    }
-    .input-group input:focus {
-      border-color:#00c853;
-      box-shadow:0 0 20px rgba(0,200,83,0.15);
-      background:#0f0f0f;
-    }
-    .input-group input::placeholder { color:#444; }
-    .input-icon {
-      position:absolute;
-      left:14px;
-      top:50%;
-      transform:translateY(-50%);
-      font-size:1.1em;
-      opacity:0.5;
-      transition:opacity 0.3s;
-    }
-    .input-group input:focus + .input-icon { opacity:1; }
-
-    /* BOUTON */
-    .btn {
-      width:100%;
-      padding:14px;
-      background:linear-gradient(135deg,#00c853,#00897b);
-      border:none;
-      border-radius:14px;
-      color:#000;
-      font-size:1em;
-      font-weight:700;
-      cursor:pointer;
-      font-family:inherit;
-      margin-top:8px;
-      position:relative;
-      overflow:hidden;
-      transition:transform 0.2s, box-shadow 0.2s;
-      letter-spacing:1px;
-    }
-    .btn:hover {
-      transform:translateY(-2px);
-      box-shadow:0 8px 25px rgba(0,200,83,0.4);
-    }
-    .btn:active { transform:scale(0.98); }
-    .btn::after {
-      content:'';
-      position:absolute;
-      inset:0;
-      background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent);
-      opacity:0;
-      transition:opacity 0.3s;
-    }
-    .btn:hover::after { opacity:1; }
-    .btn.loading {
-      pointer-events:none;
-      opacity:0.7;
-    }
-
-    /* SEPARATEUR */
-    .divider {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin:20px 0;
-      color:#333;
-      font-size:0.8em;
-    }
-    .divider::before, .divider::after {
-      content:'';
-      flex:1;
-      height:1px;
-      background:#222;
-    }
-
-    /* ERREUR */
-    .error {
-      background:rgba(255,82,82,0.1);
-      border:1px solid rgba(255,82,82,0.3);
-      border-radius:10px;
-      padding:10px 14px;
-      font-size:0.85em;
-      color:#ff5252;
-      margin-top:12px;
-      display:none;
-      animation:shake 0.4s ease;
-    }
-    .error.show { display:block; }
-    @keyframes shake {
-      0%,100% { transform:translateX(0); }
-      25% { transform:translateX(-8px); }
-      75% { transform:translateX(8px); }
-    }
-
-    /* SUCCÈS */
-    .success-overlay {
-      position:fixed;
-      inset:0;
-      background:#0a0a0a;
-      z-index:100;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      gap:16px;
-    }
-    .success-overlay.show { display:flex; animation:fadeIn 0.5s ease; }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    .success-icon {
-      font-size:5em;
-      animation:successPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    @keyframes successPop {
-      from { transform:scale(0) rotate(-180deg); }
-      to { transform:scale(1) rotate(0deg); }
-    }
-    .success-text { font-size:1.5em; font-weight:300; color:#00c853; }
-
-    /* FORCE MOT DE PASSE */
-    .password-strength {
-      height:3px;
-      border-radius:2px;
-      margin-top:6px;
-      transition:all 0.3s;
-      background:#222;
-      overflow:hidden;
-    }
-    .password-strength-bar {
-      height:100%;
-      border-radius:2px;
-      transition:all 0.3s;
-      width:0%;
-    }
+    .error{background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.25);border-radius:12px;padding:11px 14px;font-size:0.85em;color:#ff5252;margin-top:14px;display:none;animation:shake 0.4s ease;}
+    .error.show{display:block;}
+    @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+    .success{position:fixed;inset:0;background:#0a0a0a;z-index:100;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+    .success.show{display:flex;animation:fadeIn 0.5s ease;}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    .success-icon{font-size:5em;color:#00c853;animation:pop 0.6s cubic-bezier(0.34,1.56,0.64,1);filter:drop-shadow(0 0 30px #00c853);}
+    @keyframes pop{from{transform:scale(0) rotate(-180deg);}to{transform:scale(1) rotate(0deg);}}
+    .success-text{font-size:1.6em;font-weight:200;color:#00c853;letter-spacing:2px;}
   </style>
 </head>
 <body>
-
 <div class="bg">
   <div class="bg-circle"></div>
   <div class="bg-circle"></div>
   <div class="bg-circle"></div>
 </div>
-
 <div class="particles" id="particles"></div>
 
 <div class="card">
   <div class="logo-wrap">
     <span class="logo-icon">✦</span>
     <div class="logo-title">PANA</div>
-    <div class="logo-sub">INTELLIGENCE ARTIFICIELLE</div>
+    <div class="logo-sub">Intelligence Artificielle</div>
   </div>
 
   <div class="tabs">
@@ -317,141 +127,197 @@
     <button class="tab" id="tab-register" onclick="showTab('register')">Inscription</button>
   </div>
 
-  <!-- LOGIN -->
-  <div class="form" id="loginForm">
+  <div id="loginForm">
     <div class="input-group">
-      <input type="email" id="loginEmail" placeholder="Adresse email" autocomplete="email"/>
-      <span class="input-icon">📧</span>
+      <input type="email" id="loginEmail" placeholder="Adresse email"/>
+      <span class="input-icon">✉</span>
     </div>
     <div class="input-group">
-      <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password"/>
+      <input type="password" id="loginPassword" placeholder="Mot de passe"/>
       <span class="input-icon">🔒</span>
     </div>
     <button class="btn" id="loginBtn" onclick="login()">SE CONNECTER</button>
+    
+    <!-- Séparateur + Bouton Google (connexion) -->
+    <div class="separator">OU</div>
+    <button class="google-btn google-signin-btn">
+      <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+      </svg>
+      Se connecter avec Google
+    </button>
   </div>
 
-  <!-- REGISTER -->
-  <div class="form" id="registerForm" style="display:none">
+  <div id="registerForm" style="display:none">
     <div class="input-group">
       <input type="text" id="registerName" placeholder="Votre prénom"/>
       <span class="input-icon">👤</span>
     </div>
     <div class="input-group">
-      <input type="email" id="registerEmail" placeholder="Adresse email" autocomplete="email"/>
-      <span class="input-icon">📧</span>
+      <input type="email" id="registerEmail" placeholder="Adresse email"/>
+      <span class="input-icon">✉</span>
     </div>
     <div class="input-group">
-      <input type="password" id="registerPassword" placeholder="Mot de passe" oninput="checkPassword(this.value)" autocomplete="new-password"/>
+      <input type="password" id="registerPassword" placeholder="Mot de passe" oninput="checkPwd(this.value)"/>
       <span class="input-icon">🔒</span>
-      <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+      <div class="strength"><div class="strength-bar" id="sbar"></div></div>
     </div>
     <button class="btn" id="registerBtn" onclick="register()">CRÉER MON COMPTE</button>
+    
+    <!-- Séparateur + Bouton Google (inscription) -->
+    <div class="separator">OU</div>
+    <button class="google-btn google-signin-btn">
+      <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+      </svg>
+      S'inscrire avec Google
+    </button>
   </div>
 
   <div class="error" id="authError"></div>
 </div>
 
-<div class="success-overlay" id="successOverlay">
+<div class="success" id="success">
   <div class="success-icon">✦</div>
-  <div class="success-text" id="successText">Connexion réussie !</div>
+  <div class="success-text" id="successMsg">Connexion réussie !</div>
 </div>
 
 <script>
 // Particules
-const container = document.getElementById('particles');
-for (let i = 0; i < 30; i++) {
-  const p = document.createElement('div');
-  p.className = 'particle';
-  p.style.left = Math.random() * 100 + 'vw';
-  p.style.animationDelay = Math.random() * 6 + 's';
-  p.style.animationDuration = (4 + Math.random() * 4) + 's';
-  p.style.width = p.style.height = (1 + Math.random() * 3) + 'px';
-  container.appendChild(p);
+const pc = document.getElementById('particles');
+for(let i=0;i<25;i++){
+  const p=document.createElement('div');
+  p.className='particle';
+  p.style.cssText=`left:${Math.random()*100}vw;width:${1+Math.random()*3}px;height:${1+Math.random()*3}px;background:#00c853;animation-delay:${Math.random()*6}s;animation-duration:${4+Math.random()*5}s;`;
+  pc.appendChild(p);
 }
 
-function showTab(tab) {
-  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-  hideError();
-}
-
-function showError(msg) {
-  const el = document.getElementById('authError');
-  el.textContent = msg;
-  el.classList.add('show');
-}
-
-function hideError() {
+function showTab(t){
+  document.getElementById('loginForm').style.display=t==='login'?'block':'none';
+  document.getElementById('registerForm').style.display=t==='register'?'block':'none';
+  document.getElementById('tab-login').classList.toggle('active',t==='login');
+  document.getElementById('tab-register').classList.toggle('active',t==='register');
   document.getElementById('authError').classList.remove('show');
 }
 
-function checkPassword(val) {
-  const bar = document.getElementById('strengthBar');
-  let strength = 0;
-  if (val.length >= 6) strength += 25;
-  if (val.length >= 10) strength += 25;
-  if (/[A-Z]/.test(val)) strength += 25;
-  if (/[0-9!@#$%]/.test(val)) strength += 25;
-  bar.style.width = strength + '%';
-  bar.style.background = strength < 50 ? '#ff5252' : strength < 75 ? '#ffab40' : '#00c853';
+function err(msg){const e=document.getElementById('authError');e.textContent=msg;e.classList.add('show');}
+
+function checkPwd(v){
+  const b=document.getElementById('sbar');
+  let s=0;
+  if(v.length>=6)s+=25;if(v.length>=10)s+=25;if(/[A-Z]/.test(v))s+=25;if(/[0-9!@#$]/.test(v))s+=25;
+  b.style.width=s+'%';
+  b.style.background=s<50?'#ff5252':s<75?'#ffab40':'#00c853';
 }
 
-function showSuccess(msg) {
-  document.getElementById('successText').textContent = msg;
-  document.getElementById('successOverlay').classList.add('show');
-  setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+function showSuccess(msg){
+  document.getElementById('successMsg').textContent=msg;
+  document.getElementById('success').classList.add('show');
+  setTimeout(()=>{window.location.href='index.html';},1500);
 }
 
-function login() {
-  hideError();
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  if (!email || !password) { showError('Remplis tous les champs'); return; }
-  const btn = document.getElementById('loginBtn');
-  btn.textContent = '...';
-  btn.classList.add('loading');
-  setTimeout(() => {
-    const users = JSON.parse(localStorage.getItem('pana_users') || '{}');
-    if (!users[email] || users[email].password !== password) {
-      showError('Email ou mot de passe incorrect');
-      btn.textContent = 'SE CONNECTER';
-      btn.classList.remove('loading');
-      return;
-    }
-    localStorage.setItem('pana_user', JSON.stringify(users[email]));
-    showSuccess('Bienvenue, ' + users[email].name + ' !');
-  }, 800);
+function login(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pwd=document.getElementById('loginPassword').value;
+  if(!email||!pwd){err('Remplis tous les champs');return;}
+  const btn=document.getElementById('loginBtn');
+  btn.textContent='...';btn.classList.add('loading');
+  setTimeout(()=>{
+    const users=JSON.parse(localStorage.getItem('pana_users')||'{}');
+    if(!users[email]||users[email].password!==pwd){err('Email ou mot de passe incorrect');btn.textContent='SE CONNECTER';btn.classList.remove('loading');return;}
+    localStorage.setItem('pana_user',JSON.stringify(users[email]));
+    showSuccess('Bienvenue, '+users[email].name+' !');
+  },800);
 }
 
-function register() {
-  hideError();
-  const name = document.getElementById('registerName').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-  if (!name || !email || !password) { showError('Remplis tous les champs'); return; }
-  if (password.length < 6) { showError('Mot de passe minimum 6 caractères'); return; }
-  const btn = document.getElementById('registerBtn');
-  btn.textContent = '...';
-  btn.classList.add('loading');
-  setTimeout(() => {
-    const users = JSON.parse(localStorage.getItem('pana_users') || '{}');
-    if (users[email]) { showError('Email déjà utilisé'); btn.textContent = 'CRÉER MON COMPTE'; btn.classList.remove('loading'); return; }
-    users[email] = { name, email, password };
-    localStorage.setItem('pana_users', JSON.stringify(users));
-    localStorage.setItem('pana_user', JSON.stringify({ name, email }));
-    showSuccess('Compte créé ! Bienvenue ' + name + ' !');
-  }, 800);
+function register(){
+  const name=document.getElementById('registerName').value.trim();
+  const email=document.getElementById('registerEmail').value.trim();
+  const pwd=document.getElementById('registerPassword').value;
+  if(!name||!email||!pwd){err('Remplis tous les champs');return;}
+  if(pwd.length<6){err('Mot de passe minimum 6 caractères');return;}
+  const btn=document.getElementById('registerBtn');
+  btn.textContent='...';btn.classList.add('loading');
+  setTimeout(()=>{
+    const users=JSON.parse(localStorage.getItem('pana_users')||'{}');
+    if(users[email]){err('Email déjà utilisé');btn.textContent='CRÉER MON COMPTE';btn.classList.remove('loading');return;}
+    users[email]={name,email,password:pwd};
+    localStorage.setItem('pana_users',JSON.stringify(users));
+    localStorage.setItem('pana_user',JSON.stringify({name,email}));
+    showSuccess('Bienvenue '+name+' !');
+  },800);
 }
 
-// Enter pour soumettre
-document.addEventListener('keypress', e => {
-  if (e.key === 'Enter') {
-    const isLogin = document.getElementById('loginForm').style.display !== 'none';
-    isLogin ? login() : register();
+document.addEventListener('keypress',e=>{
+  if(e.key==='Enter'){
+    document.getElementById('loginForm').style.display!=='none'?login():register();
   }
 });
+</script>
+
+<!-- Firebase SDK et gestion des boutons Google -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  // ========== REMPLACEZ PAR VOS VRAIES CLÉS FIREBASE ==========
+  const firebaseConfig = {
+    apiKey: "AIzaSyBvip6okAIp6c8wv37JUcUAFUclPl1bb0o",          // <-- Remplacez par votre vraie clé
+    authDomain: "pana-ia-e5a9b.firebaseapp.com",
+    projectId: "pana-ia-e5a9b",
+    storageBucket: "pana-ia-e5a9b.appspot.com",
+    messagingSenderId: "6575713",
+    appId: "1:657571301078:web:f7b8a7abc974ccaf74eb77"
+  };
+  // ============================================================
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  function displayError(message) {
+    const errorDiv = document.getElementById('authError');
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+  }
+
+  // Fonction de connexion Google commune
+  async function handleGoogleSignIn() {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const userData = {
+        name: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        password: null,
+        googleId: user.uid,
+        photoURL: user.photoURL
+      };
+      // Stocker dans localStorage
+      const users = JSON.parse(localStorage.getItem('pana_users') || '{}');
+      if (!users[user.email]) {
+        users[user.email] = { name: userData.name, email: user.email, password: null, googleId: user.uid };
+        localStorage.setItem('pana_users', JSON.stringify(users));
+      }
+      localStorage.setItem('pana_user', JSON.stringify({ name: userData.name, email: user.email, photoURL: user.photoURL }));
+      showSuccess(`Bienvenue, ${userData.name} !`);
+    } catch (error) {
+      console.error("Erreur Google Auth :", error);
+      displayError("Échec de la connexion Google : " + error.message);
+    }
+  }
+
+  // Attacher l'événement à tous les boutons avec la classe "google-signin-btn"
+  const googleButtons = document.querySelectorAll('.google-signin-btn');
+  googleButtons.forEach(btn => {
+    btn.addEventListener('click', handleGoogleSignIn);
+  });
 </script>
 </body>
 </html>
