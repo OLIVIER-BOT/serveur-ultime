@@ -1,7 +1,8 @@
+// ⚠️ REMPLACE CES VALEURS
 const CONFIG = {
   API_URL: "https://patient-cell-api-serveur.gazoj1209.workers.dev",
-  SUPABASE_URL: "TON_URL",
-  SUPABASE_KEY: "TA_CLÉ",
+  SUPABASE_URL: "https://dfgggnhsneqkemexuqty.supabase.co",
+  SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
 };
 
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
@@ -27,8 +28,8 @@ window.onload = async () => {
 
 function startApp() {
   const h = new Date().getHours();
-  const greeting = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
-  document.getElementById('greeting').textContent = `${greeting}, ${userName} 👋`;
+  const g = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  document.getElementById('greeting').textContent = `${g}, ${userName} 👋`;
   document.getElementById('sidebarName').textContent = userName;
   document.getElementById('sidebarEmail').textContent = userEmail;
   document.getElementById('avatarLetter').textContent = userName.charAt(0).toUpperCase();
@@ -39,43 +40,43 @@ async function loadConversations() {
     .select('*').eq('user_id', userId)
     .order('created_at', { ascending: false }).limit(30);
   const list = document.getElementById('historyList');
-  if (!data || data.length === 0) { list.innerHTML = '<p style="color:#555;font-size:0.8em;padding:8px">Aucune conversation</p>'; return; }
-  list.innerHTML = data.map(c => `
-    <div class="history-item" onclick="loadConversation(${c.id})">
-      💬 ${c.title}
-    </div>`).join('');
+  if (!data || !data.length) {
+    list.innerHTML = '<p style="color:#555;font-size:0.8em;padding:8px">Aucune conversation</p>';
+    return;
+  }
+  list.innerHTML = data.map(c =>
+    `<div class="history-item" onclick="loadConversation(${c.id})">💬 ${c.title}</div>`
+  ).join('');
 }
 
 async function loadConversation(convId) {
   currentConvId = convId;
   chatHistory = [];
   const area = document.getElementById('chatArea');
-  area.innerHTML = '';
+  area.innerHTML = '<div style="text-align:center;color:#555;padding:20px">Chargement...</div>';
   const { data } = await sb.from('messages')
     .select('*').eq('conversation_id', convId)
     .order('created_at', { ascending: true });
+  area.innerHTML = '';
   if (!data) return;
   data.forEach(msg => {
     chatHistory.push({ role: msg.role, content: msg.content });
-    if (msg.role === 'user') {
-      addUserMessage(msg.content, []);
-    } else {
-      addMessage(msg.content, 'bot');
-    }
+    if (msg.role === 'user') addUserMessage(msg.content, []);
+    else addMessage(msg.content, 'bot');
   });
   closeSidebar();
+}
+
+async function createConversation(firstMsg) {
+  const { data } = await sb.from('conversations')
+    .insert({ user_id: userId, title: firstMsg.substring(0, 40) })
+    .select().single();
+  if (data) { currentConvId = data.id; loadConversations(); }
 }
 
 async function saveMessage(role, content) {
   if (!currentConvId) return;
   await sb.from('messages').insert({ conversation_id: currentConvId, role, content });
-}
-
-async function createConversation(firstMsg) {
-  const title = firstMsg.substring(0, 40);
-  const { data } = await sb.from('conversations')
-    .insert({ user_id: userId, title }).select().single();
-  if (data) { currentConvId = data.id; loadConversations(); }
 }
 
 async function logout() {
@@ -105,11 +106,9 @@ function handleImages(event) {
 function renderImagePreviews() {
   const box = document.getElementById('imgsPreviewBox');
   if (!currentImages.length) { box.innerHTML = ''; return; }
-  box.innerHTML = currentImages.map((img, i) => `
-    <div class="img-thumb">
-      <img src="${img}" onclick="zoomImage('${img}')"/>
-      <button onclick="removeImage(${i})">✕</button>
-    </div>`).join('');
+  box.innerHTML = currentImages.map((img, i) =>
+    `<div class="img-thumb"><img src="${img}" onclick="zoomImage('${img}')"/><button onclick="removeImage(${i})">✕</button></div>`
+  ).join('');
 }
 
 function removeImage(i) { currentImages.splice(i, 1); renderImagePreviews(); }
@@ -129,18 +128,21 @@ async function sendMessage() {
 
   if (!currentConvId && msg) await createConversation(msg);
 
+  // Détection vidéo
   const videoRegex = /(https?:\/\/(www\.)?(youtube|youtu\.be|tiktok|instagram|twitter|x\.com)[\S]+)/i;
-  if (msg.match(videoRegex)) {
+  const videoMatch = msg.match(videoRegex);
+  if (videoMatch) {
     addUserMessage(msg, []);
     await saveMessage('user', msg);
     const typingId = addTyping();
-    const result = await downloadVideo(msg.match(videoRegex)[0]);
+    const result = await downloadVideo(videoMatch[0]);
     removeTyping(typingId);
     addMessage(result, 'bot');
     await saveMessage('assistant', result);
     return;
   }
 
+  // Détection image
   const imageKeywords = ['génère une image','crée une image','dessine',"image d'un","image d'une",'image de'];
   if (imageKeywords.some(k => msg.toLowerCase().includes(k))) {
     addUserMessage(msg, []);
@@ -163,7 +165,12 @@ async function sendMessage() {
     const res = await fetch(CONFIG.API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: msg, images: imagesToSend, name: userName, history: chatHistory.slice(0, -1) })
+      body: JSON.stringify({
+        prompt: msg,
+        images: imagesToSend,
+        name: userName,
+        history: chatHistory.slice(0, -1)
+      })
     });
     const reply = await res.text();
     removeTyping(typingId);
@@ -173,7 +180,7 @@ async function sendMessage() {
     await saveMessage('assistant', reply);
   } catch (e) {
     removeTyping(typingId);
-    addMessage("Erreur de connexion.", 'bot');
+    addMessage('Erreur de connexion. Réessaie.', 'bot');
   }
 }
 

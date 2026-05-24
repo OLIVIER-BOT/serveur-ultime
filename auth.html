@@ -38,10 +38,10 @@
     .btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,200,83,0.4);}
     .btn:active{transform:scale(0.98);}
     .btn.loading{opacity:0.6;pointer-events:none;}
-    .btn-google{width:100%;padding:14px;background:#fff;border:none;border-radius:14px;color:#333;font-size:0.95em;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.3s;}
-    .btn-google:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(255,255,255,0.15);}
     .divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:#333;font-size:0.8em;}
     .divider::before,.divider::after{content:'';flex:1;height:1px;background:#1e1e1e;}
+    .btn-google{width:100%;padding:14px;background:#fff;border:none;border-radius:14px;color:#333;font-size:0.95em;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.3s;}
+    .btn-google:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(255,255,255,0.1);}
     .error{background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.25);border-radius:12px;padding:11px 14px;font-size:0.85em;color:#ff5252;margin-top:12px;display:none;animation:shake 0.4s ease;}
     .error.show{display:block;}
     @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
@@ -73,7 +73,6 @@
     <button class="tab" id="tab-register" onclick="showTab('register')">Inscription</button>
   </div>
 
-  <!-- LOGIN -->
   <div id="loginForm">
     <div class="input-group">
       <input type="email" id="loginEmail" placeholder="Adresse email"/>
@@ -86,12 +85,16 @@
     <button class="btn" id="loginBtn" onclick="login()">SE CONNECTER</button>
     <div class="divider">ou</div>
     <button class="btn-google" onclick="loginGoogle()">
-      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      <svg width="20" height="20" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
       Continuer avec Google
     </button>
   </div>
 
-  <!-- REGISTER -->
   <div id="registerForm" style="display:none">
     <div class="input-group">
       <input type="text" id="registerName" placeholder="Votre prénom"/>
@@ -109,7 +112,12 @@
     <button class="btn" id="registerBtn" onclick="register()">CRÉER MON COMPTE</button>
     <div class="divider">ou</div>
     <button class="btn-google" onclick="loginGoogle()">
-      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      <svg width="20" height="20" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
       Continuer avec Google
     </button>
   </div>
@@ -123,8 +131,10 @@
 </div>
 
 <script>
-const SUPABASE_URL = "TON_URL";
-const SUPABASE_KEY = "TA_CLÉ";
+// ⚠️ REMPLACE CES VALEURS
+const SUPABASE_URL = "https://dfgggnhsneqkemexuqty.supabase.co";
+const SUPABASE_KEY = "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp";
+
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Particules
@@ -141,66 +151,77 @@ window.onload = async () => {
   if (session) window.location.href = 'index.html';
 };
 
-function showTab(t){
-  document.getElementById('loginForm').style.display=t==='login'?'block':'none';
-  document.getElementById('registerForm').style.display=t==='register'?'block':'none';
-  document.getElementById('tab-login').classList.toggle('active',t==='login');
-  document.getElementById('tab-register').classList.toggle('active',t==='register');
+function showTab(t) {
+  document.getElementById('loginForm').style.display = t==='login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = t==='register' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', t==='login');
+  document.getElementById('tab-register').classList.toggle('active', t==='register');
   document.getElementById('authError').classList.remove('show');
 }
 
-function err(msg){const e=document.getElementById('authError');e.textContent=msg;e.classList.add('show');}
-
-function checkPwd(v){
-  const b=document.getElementById('sbar');
-  let s=0;
-  if(v.length>=6)s+=25;if(v.length>=10)s+=25;
-  if(/[A-Z]/.test(v))s+=25;if(/[0-9!@#$]/.test(v))s+=25;
-  b.style.width=s+'%';
-  b.style.background=s<50?'#ff5252':s<75?'#ffab40':'#00c853';
+function err(msg) {
+  const e = document.getElementById('authError');
+  e.textContent = msg;
+  e.classList.add('show');
 }
 
-function showSuccess(msg){
-  document.getElementById('successMsg').textContent=msg;
+function checkPwd(v) {
+  const b = document.getElementById('sbar');
+  let s = 0;
+  if(v.length>=6) s+=25;
+  if(v.length>=10) s+=25;
+  if(/[A-Z]/.test(v)) s+=25;
+  if(/[0-9!@#$]/.test(v)) s+=25;
+  b.style.width = s+'%';
+  b.style.background = s<50 ? '#ff5252' : s<75 ? '#ffab40' : '#00c853';
+}
+
+function showSuccess(msg) {
+  document.getElementById('successMsg').textContent = msg;
   document.getElementById('success').classList.add('show');
-  setTimeout(()=>window.location.href='index.html',1500);
+  setTimeout(() => window.location.href = 'index.html', 1500);
 }
 
-async function login(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const pwd=document.getElementById('loginPassword').value;
-  if(!email||!pwd){err('Remplis tous les champs');return;}
-  const btn=document.getElementById('loginBtn');
-  btn.textContent='...';btn.classList.add('loading');
-  const {data,error}=await sb.auth.signInWithPassword({email,password:pwd});
-  if(error){err('Email ou mot de passe incorrect');btn.textContent='SE CONNECTER';btn.classList.remove('loading');return;}
-  showSuccess('Bienvenue, '+(data.user.user_metadata?.name||'')+'!');
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd = document.getElementById('loginPassword').value;
+  if(!email||!pwd) { err('Remplis tous les champs'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = '...'; btn.classList.add('loading');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+  if(error) { err('Email ou mot de passe incorrect'); btn.textContent='SE CONNECTER'; btn.classList.remove('loading'); return; }
+  showSuccess('Bienvenue, ' + (data.user.user_metadata?.name || '') + ' !');
 }
 
-async function register(){
-  const name=document.getElementById('registerName').value.trim();
-  const email=document.getElementById('registerEmail').value.trim();
-  const pwd=document.getElementById('registerPassword').value;
-  if(!name||!email||!pwd){err('Remplis tous les champs');return;}
-  if(pwd.length<6){err('Minimum 6 caractères');return;}
-  const btn=document.getElementById('registerBtn');
-  btn.textContent='...';btn.classList.add('loading');
-  const {data,error}=await sb.auth.signUp({email,password:pwd,options:{data:{name}}});
-  if(error){err(error.message);btn.textContent='CRÉER MON COMPTE';btn.classList.remove('loading');return;}
-  await sb.from('profiles').upsert({id:data.user.id,email,name});
-  showSuccess('Bienvenue '+name+' !');
+async function register() {
+  const name = document.getElementById('registerName').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const pwd = document.getElementById('registerPassword').value;
+  if(!name||!email||!pwd) { err('Remplis tous les champs'); return; }
+  if(pwd.length<6) { err('Minimum 6 caractères'); return; }
+  const btn = document.getElementById('registerBtn');
+  btn.textContent = '...'; btn.classList.add('loading');
+  const { data, error } = await sb.auth.signUp({
+    email, password: pwd,
+    options: { data: { name } }
+  });
+  if(error) { err(error.message); btn.textContent='CRÉER MON COMPTE'; btn.classList.remove('loading'); return; }
+  await sb.from('profiles').upsert({ id: data.user.id, email, name });
+  showSuccess('Bienvenue ' + name + ' !');
 }
 
-async function loginGoogle(){
+async function loginGoogle() {
   await sb.auth.signInWithOAuth({
-    provider:'google',
-    options:{redirectTo:window.location.origin+'/index.html'}
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + '/index.html'
+    }
   });
 }
 
-document.addEventListener('keypress',e=>{
-  if(e.key==='Enter'){
-    document.getElementById('loginForm').style.display!=='none'?login():register();
+document.addEventListener('keypress', e => {
+  if(e.key==='Enter') {
+    document.getElementById('loginForm').style.display !== 'none' ? login() : register();
   }
 });
 </script>
