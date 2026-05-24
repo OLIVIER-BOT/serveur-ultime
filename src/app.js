@@ -1,86 +1,86 @@
 const CONFIG = {
   API_URL: "https://patient-cell-api-serveur.gazoj1209.workers.dev",
-  SUPABASE_URL: "https://dfgggnhsneqkemexuqty.supabase.co",
-  SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
+  SUPABASE_URL: "TON_URL",
+  SUPABASE_KEY: "TA_CLÉ",
 };
+
+const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
 
 let userName = '';
 let userEmail = '';
+let userId = '';
 let currentImages = [];
 let chatHistory = [];
+let currentConvId = null;
 
-// AUTH SIMPLE SANS SUPABASE (localStorage)
-window.onload = () => {
-  const saved = localStorage.getItem('pana_user');
-  if (saved) {
-    const user = JSON.parse(saved);
-    startApp(user.name, user.email);
-  }
+window.onload = async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'auth.html'; return; }
+  const user = session.user;
+  userId = user.id;
+  userName = user.user_metadata?.name || user.email.split('@')[0];
+  userEmail = user.email;
+  await sb.from('profiles').upsert({ id: userId, email: userEmail, name: userName });
+  startApp();
+  loadConversations();
 };
 
-function showTab(tab) {
-  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-}
-
-function login() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  if (!email || !password) {
-    document.getElementById('authError').textContent = 'Remplis tous les champs';
-    return;
-  }
-  const users = JSON.parse(localStorage.getItem('pana_users') || '{}');
-  if (!users[email] || users[email].password !== password) {
-    document.getElementById('authError').textContent = 'Email ou mot de passe incorrect';
-    return;
-  }
-  const user = users[email];
-  localStorage.setItem('pana_user', JSON.stringify(user));
-  startApp(user.name, email);
-}
-
-function register() {
-  const name = document.getElementById('registerName').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-  if (!name || !email || !password) {
-    document.getElementById('authError').textContent = 'Remplis tous les champs';
-    return;
-  }
-  if (password.length < 6) {
-    document.getElementById('authError').textContent = 'Mot de passe minimum 6 caractères';
-    return;
-  }
-  const users = JSON.parse(localStorage.getItem('pana_users') || '{}');
-  if (users[email]) {
-    document.getElementById('authError').textContent = 'Email déjà utilisé';
-    return;
-  }
-  users[email] = { name, email, password };
-  localStorage.setItem('pana_users', JSON.stringify(users));
-  localStorage.setItem('pana_user', JSON.stringify({ name, email }));
-  startApp(name, email);
-}
-
-function logout() {
-  localStorage.removeItem('pana_user');
-  location.reload();
-}
-
-function startApp(name, email) {
-  userName = name;
-  userEmail = email;
-  document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
+function startApp() {
   const h = new Date().getHours();
   const greeting = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
   document.getElementById('greeting').textContent = `${greeting}, ${userName} 👋`;
   document.getElementById('sidebarName').textContent = userName;
   document.getElementById('sidebarEmail').textContent = userEmail;
   document.getElementById('avatarLetter').textContent = userName.charAt(0).toUpperCase();
+}
+
+async function loadConversations() {
+  const { data } = await sb.from('conversations')
+    .select('*').eq('user_id', userId)
+    .order('created_at', { ascending: false }).limit(30);
+  const list = document.getElementById('historyList');
+  if (!data || data.length === 0) { list.innerHTML = '<p style="color:#555;font-size:0.8em;padding:8px">Aucune conversation</p>'; return; }
+  list.innerHTML = data.map(c => `
+    <div class="history-item" onclick="loadConversation(${c.id})">
+      💬 ${c.title}
+    </div>`).join('');
+}
+
+async function loadConversation(convId) {
+  currentConvId = convId;
+  chatHistory = [];
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+  const { data } = await sb.from('messages')
+    .select('*').eq('conversation_id', convId)
+    .order('created_at', { ascending: true });
+  if (!data) return;
+  data.forEach(msg => {
+    chatHistory.push({ role: msg.role, content: msg.content });
+    if (msg.role === 'user') {
+      addUserMessage(msg.content, []);
+    } else {
+      addMessage(msg.content, 'bot');
+    }
+  });
+  closeSidebar();
+}
+
+async function saveMessage(role, content) {
+  if (!currentConvId) return;
+  await sb.from('messages').insert({ conversation_id: currentConvId, role, content });
+}
+
+async function createConversation(firstMsg) {
+  const title = firstMsg.substring(0, 40);
+  const { data } = await sb.from('conversations')
+    .insert({ user_id: userId, title }).select().single();
+  if (data) { currentConvId = data.id; loadConversations(); }
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  window.location.href = 'auth.html';
 }
 
 function toggleSidebar() {
@@ -127,27 +127,33 @@ async function sendMessage() {
   autoResize(input);
   document.getElementById('welcome')?.remove();
 
+  if (!currentConvId && msg) await createConversation(msg);
+
   const videoRegex = /(https?:\/\/(www\.)?(youtube|youtu\.be|tiktok|instagram|twitter|x\.com)[\S]+)/i;
-  const videoMatch = msg.match(videoRegex);
-  if (videoMatch) {
+  if (msg.match(videoRegex)) {
     addUserMessage(msg, []);
+    await saveMessage('user', msg);
     const typingId = addTyping();
-    const result = await downloadVideo(videoMatch[0]);
+    const result = await downloadVideo(msg.match(videoRegex)[0]);
     removeTyping(typingId);
     addMessage(result, 'bot');
+    await saveMessage('assistant', result);
     return;
   }
 
-  const imageKeywords = ['génère une image', 'crée une image', 'dessine', 'image de', "image d'un", "image d'une"];
+  const imageKeywords = ['génère une image','crée une image','dessine',"image d'un","image d'une",'image de'];
   if (imageKeywords.some(k => msg.toLowerCase().includes(k))) {
     addUserMessage(msg, []);
+    await saveMessage('user', msg);
     const prompt = msg.replace(/génère une image|crée une image|dessine/gi, '').trim();
     generateImage(prompt);
     return;
   }
 
   addUserMessage(msg, currentImages);
+  await saveMessage('user', msg);
   chatHistory.push({ role: 'user', content: msg || 'Analyse ces images' });
+
   const imagesToSend = [...currentImages];
   currentImages = [];
   renderImagePreviews();
@@ -164,19 +170,11 @@ async function sendMessage() {
     typeMessage(reply);
     chatHistory.push({ role: 'assistant', content: reply });
     if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-    updateHistory(msg);
+    await saveMessage('assistant', reply);
   } catch (e) {
     removeTyping(typingId);
     addMessage("Erreur de connexion.", 'bot');
   }
-}
-
-function updateHistory(msg) {
-  const list = document.getElementById('historyList');
-  const div = document.createElement('div');
-  div.className = 'history-item';
-  div.textContent = '💬 ' + msg.substring(0, 30);
-  list.prepend(div);
 }
 
 function addUserMessage(text, images) {
@@ -255,6 +253,7 @@ function removeTyping(id) { document.getElementById(id)?.remove(); }
 function newChat() {
   chatHistory = [];
   currentImages = [];
+  currentConvId = null;
   renderImagePreviews();
   closeSidebar();
   document.getElementById('chatArea').innerHTML = `<div class="welcome" id="welcome"><div class="star-welcome">✦</div><h1 id="greeting">Bonsoir, ${userName} 👋</h1></div>`;
@@ -283,14 +282,14 @@ function generateImage(prompt) {
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = 'msg bot';
-  const statusId = 'img_' + Date.now();
+  const sid = 'img_' + Date.now();
   div.innerHTML = `<div class="bot-header"><span class="star-logo">✦</span> PANA</div>
     <div class="bot-content">
-      <p id="${statusId}" style="color:#888;margin-bottom:8px;">🎨 Génération en cours...</p>
+      <p id="${sid}" style="color:#888;margin-bottom:8px;">🎨 Génération en cours...</p>
       <img src="${url}" style="max-width:100%;border-radius:12px;display:block;"
-        onload="document.getElementById('${statusId}').textContent='✅ Image générée !'"
-        onerror="document.getElementById('${statusId}').textContent='❌ Erreur de génération'"/>
-      <small style="color:#666;display:block;margin-top:6px;">"${clean}"</small>
+        onload="document.getElementById('${sid}').textContent='✅ Image générée !'"
+        onerror="document.getElementById('${sid}').textContent='❌ Erreur'"/>
+      <small style="color:#666;margin-top:6px;display:block;">"${clean}"</small>
     </div>`;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;

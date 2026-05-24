@@ -4,38 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PANA AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-
-  <!-- AUTH -->
-  <div class="auth-screen" id="authScreen">
-    <div class="auth-box">
-      <div class="logo-big">✦</div>
-      <h2>PANA AI</h2>
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Connexion</button>
-        <button class="auth-tab" id="tab-register" onclick="showTab('register')">Inscription</button>
-      </div>
-      <div id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email"/>
-        <input type="password" id="loginPassword" placeholder="Mot de passe"/>
-        <button onclick="login()">Se connecter</button>
-      </div>
-      <div id="registerForm" style="display:none">
-        <input type="text" id="registerName" placeholder="Prénom"/>
-        <input type="email" id="registerEmail" placeholder="Email"/>
-        <input type="password" id="registerPassword" placeholder="Mot de passe"/>
-        <button onclick="register()">Créer un compte</button>
-      </div>
-      <p class="auth-error" id="authError"></p>
-    </div>
-  </div>
-
-  <!-- OVERLAY -->
   <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
-  <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <span>PANA</span>
@@ -43,7 +17,7 @@
     </div>
     <button class="new-chat-btn" onclick="newChat()">✏️ Nouvelle conversation</button>
     <div class="history-section">
-      <h4>Aujourd'hui</h4>
+      <h4>Conversations</h4>
       <div id="historyList"></div>
     </div>
     <div class="sidebar-bottom">
@@ -58,8 +32,7 @@
     </div>
   </div>
 
-  <!-- APP -->
-  <div class="app" id="app" style="display:none">
+  <div class="app" id="app">
     <div class="topbar">
       <button class="icon-btn" onclick="toggleSidebar()">☰</button>
       <div class="upgrade-banner">PANA Pro <span class="upgrade-link">Mettre à niveau</span></div>
