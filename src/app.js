@@ -1,7 +1,7 @@
 const CONFIG = {
   API_URL: "https://patient-cell-api-serveur.gazoj1209.workers.dev",
-  SUPABASE_URL: "TON_URL_SUPABASE",
-  SUPABASE_KEY: "TA_CLÉ_SUPABASE",
+  SUPABASE_URL: "https://dfgggnhsneqkemexuqty.supabase.co",
+  SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
 };
 
 const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
