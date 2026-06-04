@@ -1,26 +1,24 @@
 const CONFIG = {
   API_URL: "https://patient-cell-api-serveur.gazoj1209.workers.dev",
-  SUPABASE_URL: "https://dfgggnhsneqkemexuqty.supabase.co",
-  SUPABASE_KEY: "sb_publishable_gNvns_dNEZQsJsIdP3ywdg_A_SJxOFp",
 };
-
-const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
 
 let userName = '';
 let userEmail = '';
-let userId = '';
 let currentImages = [];
 let chatHistory = [];
 let currentConvId = null;
+let conversations = [];
 
-window.onload = async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'auth.html'; return; }
-  const user = session.user;
-  userId = user.id;
-  userName = user.user_metadata?.name || user.email.split('@')[0];
+// INIT - Lecture depuis localStorage (même système que auth.html)
+window.onload = () => {
+  const userStr = localStorage.getItem('pana_user');
+  if (!userStr) {
+    window.location.href = 'auth.html';
+    return;
+  }
+  const user = JSON.parse(userStr);
+  userName = user.name || user.email.split('@')[0];
   userEmail = user.email;
-  await sb.from('profiles').upsert({ id: userId, email: userEmail, name: userName });
   startApp();
   loadConversations();
 };
@@ -34,31 +32,58 @@ function startApp() {
   document.getElementById('avatarLetter').textContent = userName.charAt(0).toUpperCase();
 }
 
-async function loadConversations() {
-  const { data } = await sb.from('conversations')
-    .select('*').eq('user_id', userId)
-    .order('created_at', { ascending: false }).limit(30);
+// CONVERSATIONS - stockées dans localStorage par utilisateur
+function getStorageKey() {
+  return 'pana_convs_' + userEmail;
+}
+
+function loadConversations() {
+  conversations = JSON.parse(localStorage.getItem(getStorageKey()) || '[]');
+  renderHistory();
+}
+
+function renderHistory() {
   const list = document.getElementById('historyList');
-  if (!data || !data.length) {
+  if (!conversations.length) {
     list.innerHTML = '<p style="color:#555;font-size:0.8em;padding:8px">Aucune conversation</p>';
     return;
   }
-  list.innerHTML = data.map(c =>
-    `<div class="history-item" onclick="loadConversation(${c.id})">💬 ${c.title}</div>`
+  list.innerHTML = conversations.slice().reverse().map((c, i) =>
+    `<div class="history-item" onclick="loadConversation(${conversations.length - 1 - i})">💬 ${c.title}</div>`
   ).join('');
 }
 
-async function loadConversation(convId) {
-  currentConvId = convId;
+function saveConversations() {
+  localStorage.setItem(getStorageKey(), JSON.stringify(conversations));
+  renderHistory();
+}
+
+function createConversation(firstMsg) {
+  const conv = {
+    id: Date.now(),
+    title: firstMsg.substring(0, 40),
+    messages: []
+  };
+  conversations.push(conv);
+  currentConvId = conversations.length - 1;
+  saveConversations();
+  return currentConvId;
+}
+
+function saveMessage(role, content) {
+  if (currentConvId === null) return;
+  conversations[currentConvId].messages.push({ role, content });
+  saveConversations();
+}
+
+function loadConversation(index) {
+  currentConvId = index;
   chatHistory = [];
   const area = document.getElementById('chatArea');
-  area.innerHTML = '<div style="text-align:center;color:#555;padding:20px">Chargement...</div>';
-  const { data } = await sb.from('messages')
-    .select('*').eq('conversation_id', convId)
-    .order('created_at', { ascending: true });
   area.innerHTML = '';
-  if (!data) return;
-  data.forEach(msg => {
+  const conv = conversations[index];
+  if (!conv) return;
+  conv.messages.forEach(msg => {
     chatHistory.push({ role: msg.role, content: msg.content });
     if (msg.role === 'user') addUserMessage(msg.content, []);
     else addMessage(msg.content, 'bot');
@@ -66,20 +91,8 @@ async function loadConversation(convId) {
   closeSidebar();
 }
 
-async function createConversation(firstMsg) {
-  const { data } = await sb.from('conversations')
-    .insert({ user_id: userId, title: firstMsg.substring(0, 40) })
-    .select().single();
-  if (data) { currentConvId = data.id; loadConversations(); }
-}
-
-async function saveMessage(role, content) {
-  if (!currentConvId) return;
-  await sb.from('messages').insert({ conversation_id: currentConvId, role, content });
-}
-
-async function logout() {
-  await sb.auth.signOut();
+function logout() {
+  localStorage.removeItem('pana_user');
   window.location.href = 'auth.html';
 }
 
@@ -125,32 +138,34 @@ async function sendMessage() {
   autoResize(input);
   document.getElementById('welcome')?.remove();
 
-  if (!currentConvId && msg) await createConversation(msg);
+  if (currentConvId === null && msg) createConversation(msg);
 
+  // Détection vidéo
   const videoRegex = /(https?:\/\/(www\.)?(youtube|youtu\.be|tiktok|instagram|twitter|x\.com)[\S]+)/i;
   const videoMatch = msg.match(videoRegex);
   if (videoMatch) {
     addUserMessage(msg, []);
-    await saveMessage('user', msg);
+    saveMessage('user', msg);
     const typingId = addTyping();
     const result = await downloadVideo(videoMatch[0]);
     removeTyping(typingId);
     addMessage(result, 'bot');
-    await saveMessage('assistant', result);
+    saveMessage('assistant', result);
     return;
   }
 
+  // Détection image
   const imageKeywords = ['génère une image','crée une image','dessine',"image d'un","image d'une",'image de'];
   if (imageKeywords.some(k => msg.toLowerCase().includes(k))) {
     addUserMessage(msg, []);
-    await saveMessage('user', msg);
+    saveMessage('user', msg);
     const prompt = msg.replace(/génère une image|crée une image|dessine/gi, '').trim();
     generateImage(prompt);
     return;
   }
 
   addUserMessage(msg, currentImages);
-  await saveMessage('user', msg);
+  saveMessage('user', msg);
   chatHistory.push({ role: 'user', content: msg || 'Analyse ces images' });
 
   const imagesToSend = [...currentImages];
@@ -174,7 +189,7 @@ async function sendMessage() {
     typeMessage(reply);
     chatHistory.push({ role: 'assistant', content: reply });
     if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
-    await saveMessage('assistant', reply);
+    saveMessage('assistant', reply);
   } catch (e) {
     removeTyping(typingId);
     addMessage('Erreur de connexion. Réessaie.', 'bot');
